@@ -32,3 +32,6 @@ config :uro,
            ],
            else: [pool_size: 10]
          )
+
+# The tests release leases themselves; the janitor stays out of the sandbox.
+config :uro, :agent_task_janitor_interval, 24 * 60 * 60 * 1000
