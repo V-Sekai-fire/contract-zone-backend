@@ -70,7 +70,7 @@ OTEL_SERVICE_NAME=uro-offline-control OTEL_EXPORTER_OTLP_ENDPOINT=$obs:1/insert/
 export WEFT_FDB_CLUSTER_FILE="$cluster" TEST_DATABASE="file:uro_offline.v1?vfs=weft_fdb"
 URO_MIGRATION_POOL=1 mix ecto.migrate
 mix run priv/repo/test_seeds.exs
-mix test 2>&1 | tee "$work/uro-test.log"
+URO_SUITE_URL=$obs mix test --include suite 2>&1 | tee "$work/uro-test.log"
 
 keys=$(fdbcli -C "$cluster" --exec "getrangekeys weft/db/uro_offline.v1/ weft/db/uro_offline.v10 100" |
   grep -c "weft/db/uro_offline.v1/" || true)
