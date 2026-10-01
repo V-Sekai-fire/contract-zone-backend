@@ -20,7 +20,6 @@ defmodule Uro.Release do
 
   def migrate do
     load_app()
-    Uro.Repo.WeftFdb.load_configured!()
 
     for repo <- [Uro.Repo] do
       {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
