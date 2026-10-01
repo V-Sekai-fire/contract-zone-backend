@@ -7,10 +7,9 @@ defmodule Uro.ZoneAccessTest do
   alias Uro.VSekai
   alias Uro.VSekai.Zone
 
-  @now DateTime.utc_now()
-
+  # The time is taken at insert, not at compile: a zone stops being fresh 30 s later.
   defp fresh_zone(attrs) do
-    Repo.insert!(%Zone{last_put_at: @now} |> Map.merge(attrs))
+    Repo.insert!(%Zone{last_put_at: DateTime.utc_now()} |> Map.merge(attrs))
   end
 
   describe "can_enter_zone?/2" do
