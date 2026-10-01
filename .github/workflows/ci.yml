@@ -75,7 +75,7 @@ jobs:
 
       - name: Run tests
         run: |
-          mix ecto.migrate
+          URO_MIGRATION_POOL=1 mix ecto.migrate
           mix run priv/repo/test_seeds.exs
           mix test --trace
 
