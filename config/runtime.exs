@@ -39,65 +39,15 @@ if config_env() == :prod do
       |> URI.new!(),
     root_origin: root_origin
 
-  crdb_sni =
-    case System.get_env("CRDB_SNI") do
-      nil -> :disable
-      name -> String.to_charlist(name)
-    end
+  config :uro, :weftfdb_extension, System.fetch_env!("URO_WEFTFDB_EXTENSION")
 
-  crdb_ssl =
-    case System.get_env("CRDB_CA_CERT") do
-      nil ->
-        false
-
-      ca ->
-        [
-          cacertfile: ca,
-          certfile: System.get_env("CRDB_CLIENT_CERT"),
-          keyfile: System.get_env("CRDB_CLIENT_KEY"),
-          verify: :verify_peer,
-          server_name_indication: crdb_sni
-        ]
-    end
-
-  crdb_admin_ssl =
-    case System.get_env("CRDB_CA_CERT") do
-      nil ->
-        false
-
-      ca ->
-        [
-          cacertfile: ca,
-          certfile: System.get_env("CRDB_ADMIN_CERT"),
-          keyfile: System.get_env("CRDB_ADMIN_KEY"),
-          verify: :verify_peer,
-          server_name_indication: crdb_sni
-        ]
-    end
-
-  # DML repo — gateway_writer, no DDL privilege
+  # One connection: every open of a weft_fdb database takes its fence (datasource-store).
   config :uro, Uro.Repo,
-    adapter: Ecto.Adapters.Postgres,
-    url: System.fetch_env!("DATABASE_URL"),
-    stacktrace: true,
-    show_sensitive_data_on_connection_error: true,
-    pool_size: 10,
-    prepare: :unnamed,
-    migration_lock: false,
-    socket_options: [:inet6],
-    ssl: crdb_ssl
-
-  # DDL repo — gateway_admin, used only by Uro.Release.migrate/0.
-  # Shares the same migration files as Uro.Repo (priv: "priv/repo").
-  config :uro, Uro.Repo.Migration,
-    priv: "priv/repo",
-    adapter: Ecto.Adapters.Postgres,
-    url: System.fetch_env!("MIGRATION_DATABASE_URL"),
-    pool_size: 2,
-    prepare: :unnamed,
-    migration_lock: false,
-    socket_options: [:inet6],
-    ssl: crdb_admin_ssl
+    database: System.get_env("URO_DATABASE", "file:uro.v1?vfs=weft_fdb"),
+    pool_size: 1,
+    journal_mode: :memory,
+    locking_mode: :exclusive,
+    migration_lock: false
 
   https_port = String.to_integer(System.get_env("HTTPS_PORT") || "443")
   http_port = String.to_integer(System.get_env("PORT") || "4000")

@@ -12,10 +12,8 @@ defmodule Uro.Release do
   (or, self-contained, through this app's own boot flow before starting
   the endpoint).
 
-  Migrates through `Uro.Repo.Migration` (the `gateway_admin` connection,
-  DDL-capable), never `Uro.Repo` (`gateway_writer`, DML only) -- matching
-  the role separation `AGENTS.md` documents. Both repos share the same
-  migration files (`config :uro, Uro.Repo.Migration, priv: "priv/repo"`).
+  Migrates through `Uro.Repo` itself, before the endpoint starts: a weft_fdb
+  database admits one connection, since every open takes its fence.
   """
 
   @app :uro
@@ -23,7 +21,7 @@ defmodule Uro.Release do
   def migrate do
     load_app()
 
-    for repo <- [Uro.Repo.Migration] do
+    for repo <- [Uro.Repo] do
       {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
     end
   end
