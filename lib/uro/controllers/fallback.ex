@@ -50,6 +50,26 @@ defmodule Uro.FallbackController do
     json_error(conn, code: :forbidden, message: "Registration is closed")
   end
 
+  def call(conn, {:error, :second_factor_required}) do
+    json_error(conn, code: :unauthorized, message: "Second factor required")
+  end
+
+  def call(conn, {:error, :invalid_second_factor}) do
+    json_error(conn, code: :unauthorized, message: "Invalid second factor")
+  end
+
+  def call(conn, {:error, reason})
+      when reason in [:no_enrollment, :already_enabled, :not_enabled] do
+    message =
+      %{
+        no_enrollment: "No authenticator enrolment to confirm",
+        already_enabled: "An authenticator is already enabled",
+        not_enabled: "No authenticator is enabled"
+      }[reason]
+
+    json_error(conn, code: :conflict, message: message)
+  end
+
   def call(conn, {:error, :account_locked}) do
     json_error(conn, code: :locked, message: "Account unavailable")
   end
