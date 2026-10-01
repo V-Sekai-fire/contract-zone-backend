@@ -15,9 +15,93 @@ defmodule Uro.AgentTaskController do
 
   use Uro, :controller
 
+  alias OpenApiSpex.Schema
   alias Uro.AgentTasks
 
   action_fallback(Uro.FallbackController)
+
+  tags(["agent tasks"])
+
+  @task %Schema{
+    type: :object,
+    properties: %{
+      id: %Schema{type: :string, format: :uuid},
+      title: %Schema{type: :string},
+      body: %Schema{type: :string}
+    }
+  }
+  @task_id [id: [in: :path, schema: %Schema{type: :string, format: :uuid}]]
+  @refused "This agent holds no claim on that task"
+
+  operation(:index,
+    operation_id: "agentTasks",
+    summary: "The caller's open tasks, oldest first",
+    responses: [
+      ok:
+        {"", "application/json",
+         %Schema{type: :object, properties: %{tasks: %Schema{type: :array, items: @task}}}}
+    ]
+  )
+
+  operation(:create,
+    operation_id: "pushAgentTask",
+    summary: "Push a task onto the caller's deque",
+    request_body:
+      {"", "application/json",
+       %Schema{
+         type: :object,
+         required: [:title, :body],
+         properties: %{
+           title: %Schema{type: :string},
+           body: %Schema{type: :string},
+           pinned: %Schema{type: :boolean}
+         }
+       }},
+    responses: [
+      created: {"", "application/json", %Schema{type: :object, properties: %{task: @task}}}
+    ]
+  )
+
+  operation(:claim,
+    operation_id: "claimAgentTask",
+    summary: "Claim the caller's newest task, else steal from the fullest queue",
+    responses: [
+      ok:
+        {"", "application/json",
+         %Schema{
+           type: :object,
+           properties: %{task: @task, stolen_from: %Schema{type: :string, nullable: true}}
+         }},
+      no_content: "No task is free anywhere"
+    ]
+  )
+
+  operation(:renew,
+    operation_id: "renewAgentTask",
+    summary: "Extend the caller's lease on a task",
+    parameters: @task_id,
+    responses: [
+      ok:
+        {"", "application/json",
+         %Schema{type: :object, properties: %{lease_seconds: %Schema{type: :integer}}}},
+      conflict: @refused
+    ]
+  )
+
+  operation(:complete,
+    operation_id: "completeAgentTask",
+    summary: "Finish a task the caller holds",
+    parameters: @task_id,
+    request_body:
+      {"", "application/json",
+       %Schema{type: :object, required: [:result], properties: %{result: %Schema{type: :string}}}},
+    responses: [
+      ok:
+        {"", "application/json",
+         %Schema{type: :object, properties: %{completed: %Schema{type: :string, format: :uuid}}}},
+      conflict: @refused
+    ]
+  )
 
   def index(conn, _params) do
     with {:ok, agent} <- agent(conn) do
@@ -51,7 +135,7 @@ defmodule Uro.AgentTaskController do
          :ok <- AgentTasks.renew(agent, task_id) do
       json(conn, %{lease_seconds: AgentTasks.lease_seconds()})
     else
-      {:error, :not_claimed} -> {:error, :conflict, "This agent holds no claim on that task"}
+      {:error, :not_claimed} -> {:error, :conflict, @refused}
       other -> other
     end
   end
@@ -62,7 +146,7 @@ defmodule Uro.AgentTaskController do
          :ok <- AgentTasks.complete(agent, task_id, result) do
       json(conn, %{completed: task_id})
     else
-      {:error, :not_claimed} -> {:error, :conflict, "This agent holds no claim on that task"}
+      {:error, :not_claimed} -> {:error, :conflict, @refused}
       other -> other
     end
   end
