@@ -120,6 +120,16 @@ defmodule Uro.Router do
 
     post "/loop/commit", Uro.LoopController, :commit
 
+    scope "/agent_tasks" do
+      pipe_through([:authenticated_user])
+
+      get "/", Uro.AgentTaskController, :index
+      post "/", Uro.AgentTaskController, :create
+      post "/claim", Uro.AgentTaskController, :claim
+      post "/:id/renew", Uro.AgentTaskController, :renew
+      post "/:id/complete", Uro.AgentTaskController, :complete
+    end
+
     scope "/admin" do
       pipe_through([:authenticated_admin])
 
