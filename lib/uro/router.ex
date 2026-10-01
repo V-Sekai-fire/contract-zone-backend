@@ -141,6 +141,12 @@ defmodule Uro.Router do
 
     resources("/shards", Uro.ZoneController, only: [:index, :create, :update, :delete])
 
+    scope "/identity_proofs" do
+      pipe_through([:authenticated_user])
+      post("/", Uro.IdentityProofController, :create)
+      get("/:id", Uro.IdentityProofController, :show)
+    end
+
     post "/loop/commit", Uro.LoopController, :commit
 
     scope "/admin" do

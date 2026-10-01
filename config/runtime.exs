@@ -141,9 +141,24 @@ if config_env() == :prod do
     host: System.get_env("VERSITYGW_HOST", "versitygw"),
     port: String.to_integer(System.get_env("VERSITYGW_PORT", "7070"))
 
-  # User content (avatars, maps, props) goes to this bucket on the same object store. It was
-  # unset, so every upload crashed in Waffle before reaching the store.
-  config :waffle, bucket: System.get_env("UPLOAD_BUCKET", "zone-uploads")
+  # User content (avatars, maps, props). UPLOAD_STORAGE picks where it goes, and it is explicit
+  # rather than a fallback so a deploy missing its object store fails at boot and not at the
+  # first upload: "s3" is the bucket on the object store above, "local" is the disk under
+  # UPLOAD_DIR, for a machine with no object store (the offline laptop, a measurement rig).
+  case System.get_env("UPLOAD_STORAGE", "s3") do
+    "s3" ->
+      config :waffle,
+        storage: Waffle.Storage.S3,
+        bucket: System.get_env("UPLOAD_BUCKET", "zone-uploads")
+
+    "local" ->
+      config :waffle,
+        storage: Waffle.Storage.Local,
+        storage_dir_prefix: System.get_env("UPLOAD_DIR", "/app/priv/uploads")
+
+    other ->
+      raise "UPLOAD_STORAGE must be s3 or local, got #{inspect(other)}"
+  end
 
   otel_endpoint =
     System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") ||

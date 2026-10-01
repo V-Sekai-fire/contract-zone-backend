@@ -129,6 +129,39 @@ defmodule Uro.ClientRoutesTest do
     refute is_nil(Uro.Accounts.get_user!(user.id).email_confirmed_at)
   end
 
+  test "identity proofs are routed: a party reads one, a stranger gets 404" do
+    n = System.unique_integer([:positive])
+    from = make_user("from#{n}", false)
+    to = make_user("to#{n}", false)
+    stranger = make_user("stranger#{n}", false)
+    token = sign_in(from.username, "probe-password-1")
+
+    created =
+      build_conn()
+      |> Plug.Conn.put_req_header("authorization", token)
+      |> form("/api/v1/identity_proofs", %{"identity_proof" => %{"user_to" => to.id}})
+
+    assert created.status == 200
+    %{"id" => id} = Jason.decode!(created.resp_body)
+
+    shown =
+      build_conn()
+      |> Plug.Conn.put_req_header("authorization", sign_in(to.username, "probe-password-1"))
+      |> get("/api/v1/identity_proofs/#{id}")
+
+    assert shown.status == 200
+
+    assert %{"data" => %{"identity_proof" => %{"id" => ^id, "user_from" => %{"username" => _}}}} =
+             Jason.decode!(shown.resp_body)
+
+    hidden =
+      build_conn()
+      |> Plug.Conn.put_req_header("authorization", sign_in(stranger.username, "probe-password-1"))
+      |> get("/api/v1/identity_proofs/#{id}")
+
+    assert hidden.status == 404
+  end
+
   test "an unknown route is 404 json, not 500" do
     # The router's error handler sends the reply on its own copy of the conn, so the
     # response is read back from the test adapter rather than from the returned conn.
