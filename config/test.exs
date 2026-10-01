@@ -13,9 +13,22 @@ config :uro,
          database: System.get_env("TEST_DATABASE", Path.expand("../priv/uro_test.db", __DIR__)),
          stacktrace: true,
          migration_lock: false,
-         pool: Ecto.Adapters.SQL.Sandbox
+         # The migrator runs each migration in its own process, which the sandbox
+         # refuses on a one-connection weft_fdb database; CI migrates with a plain pool.
+         pool:
+           if(System.get_env("URO_MIGRATION_POOL"),
+             do: DBConnection.ConnectionPool,
+             else: Ecto.Adapters.SQL.Sandbox
+           )
        ] ++
          if(weftfdb,
-           do: [pool_size: 1, journal_mode: :memory, locking_mode: :exclusive],
+           do: [
+             pool_size: 1,
+             journal_mode: :memory,
+             locking_mode: :exclusive,
+             # Sandboxed async tests queue on the one connection; wait rather than drop.
+             queue_target: 5_000,
+             queue_interval: 30_000
+           ],
            else: [pool_size: 10]
          )
