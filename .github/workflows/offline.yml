@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2026 K. S. Ernest (iFire) Lee
+# Uro and its FoundationDB, each in its own bubblewrap sandbox on a private internal network
+# with no route out: the runtime half of the offline deploy (#76). Building still fetches.
+name: Offline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: offline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  offline:
+    name: offline
+    runs-on: ubuntu-24.04
+
+    env:
+      MIX_ENV: test
+      URO_WEFTFDB_EXTENSION: ${{ github.workspace }}/datasource-store/build/weftfdb
+      STORE_REF: 39d1f32c2becf564365c667379bd045cd5381264
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          elixir-version: "1.17"
+          otp-version: "27"
+
+      - name: Cache Mix deps
+        uses: actions/cache@v4
+        with:
+          path: |
+            deps
+            _build
+          key: ${{ runner.os }}-zone-backend-mix-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-zone-backend-mix-
+
+      - name: Install FoundationDB and bubblewrap, with no FoundationDB service outside
+        run: |
+          curl -fsSLO https://github.com/apple/foundationdb/releases/download/7.3.63/foundationdb-clients_7.3.63-1_amd64.deb
+          curl -fsSLO https://github.com/apple/foundationdb/releases/download/7.3.63/foundationdb-server_7.3.63-1_amd64.deb
+          sudo dpkg -i foundationdb-clients_7.3.63-1_amd64.deb foundationdb-server_7.3.63-1_amd64.deb
+          sudo systemctl stop foundationdb
+          sudo apt-get install -y -q bubblewrap cmake libsqlite3-dev
+          # Ubuntu 24.04 confines unprivileged user namespaces, which bubblewrap needs.
+          sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+
+      - name: Check out datasource-store at the pinned commit
+        uses: actions/checkout@v4
+        with:
+          repository: V-Sekai-fire/datasource-store
+          ref: ${{ env.STORE_REF }}
+          path: datasource-store
+
+      - name: Build the weftfdb extension
+        working-directory: datasource-store
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target weftfdb
+
+      - name: Fetch and compile (online, the build half)
+        run: |
+          mix deps.get
+          mix compile
+
+      - name: Run FoundationDB and Uro on the private network
+        run: tools/offline/run.sh
+
+      - name: Control (the same sandbox refuses a fetch past the machine)
+        run: |
+          if bwrap --unshare-net --ro-bind / / --dev /dev --proc /proc \
+               curl -sS --max-time 5 -o /dev/null https://github.com 2> control.txt; then
+            echo "github.com answered with the network unshared"; exit 1
+          fi
+          cat control.txt
+          # Outside the sandbox the same fetch works, so the failure above is the sandbox's.
+          curl -sS --max-time 15 -o /dev/null https://github.com
