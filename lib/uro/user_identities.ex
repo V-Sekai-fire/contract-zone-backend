@@ -9,6 +9,12 @@ defmodule Uro.UserIdentities do
   alias Uro.Repo
 
   def create_user(user_identity_params, user_params, user_id_params) do
+    if Uro.Registration.open?(),
+      do: insert_user(user_identity_params, user_params, user_id_params),
+      else: {:error, :registration_closed}
+  end
+
+  defp insert_user(user_identity_params, user_params, user_id_params) do
     Repo.transaction(fn ->
       with {:ok, user} <-
              pow_assent_create_user(user_identity_params, user_params, user_id_params),
