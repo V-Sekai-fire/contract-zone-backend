@@ -13,7 +13,6 @@ defmodule Uro.Application do
     # config/prod.exs.
     OpentelemetryPhoenix.setup(adapter: :bandit)
     OpentelemetryEcto.setup([:uro, :repo])
-    Uro.Repo.WeftFdb.load_configured!()
 
     children =
       if System.get_env("MINIMAL_START") == "true",

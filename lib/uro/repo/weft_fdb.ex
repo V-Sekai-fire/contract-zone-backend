@@ -7,10 +7,19 @@ defmodule Uro.Repo.WeftFdb do
   loaded once, on a throwaway in-memory connection, and stays registered for the process.
   """
 
+  @doc "Loads the configured extension once per BEAM; `:loaded` when one is configured."
   def load_configured! do
     case Application.get_env(:uro, :weftfdb_extension) do
-      nil -> :ok
-      path -> load!(path)
+      nil ->
+        :none
+
+      path ->
+        unless :persistent_term.get({__MODULE__, path}, false) do
+          :ok = load!(path)
+          :persistent_term.put({__MODULE__, path}, true)
+        end
+
+        :loaded
     end
   end
 
