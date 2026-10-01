@@ -23,3 +23,5 @@ config :uro, Uro.Repo,
   stacktrace: true,
   migration_lock: false,
   pool_size: 10
+
+config :uro, :webauthn, origin: "http://localhost:4000", rp_id: "localhost"

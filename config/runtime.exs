@@ -41,6 +41,11 @@ if config_env() == :prod do
 
   config :uro, :weftfdb_extension, System.fetch_env!("URO_WEFTFDB_EXTENSION")
 
+  # Passkeys bind to this origin's host, so it must not change once users have registered.
+  config :uro, :webauthn,
+    origin: System.get_env("WEBAUTHN_ORIGIN", URI.to_string(root_origin)),
+    rp_id: System.get_env("WEBAUTHN_RP_ID", root_origin.host)
+
   # One connection: every open of a weft_fdb database takes its fence (datasource-store).
   config :uro, Uro.Repo,
     database: System.get_env("URO_DATABASE", "file:uro.v1?vfs=weft_fdb"),

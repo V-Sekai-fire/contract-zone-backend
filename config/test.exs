@@ -33,6 +33,8 @@ config :uro,
            else: [pool_size: 10]
          )
 
+config :uro, :webauthn, origin: "https://uro.test", rp_id: "uro.test"
+
 # Sessions and sealed second factors need a key base; the server stays off.
 config :uro, Uro.Endpoint,
   server: false,

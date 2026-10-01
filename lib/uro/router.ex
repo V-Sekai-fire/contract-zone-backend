@@ -92,6 +92,10 @@ defmodule Uro.Router do
       post("/totp", Uro.SecondFactorController, :begin_totp)
       post("/totp/confirm", Uro.SecondFactorController, :confirm_totp)
       delete("/totp", Uro.SecondFactorController, :disable_totp)
+      get("/passkeys", Uro.PasskeyController, :index)
+      post("/passkeys/challenge", Uro.PasskeyController, :registration_challenge)
+      post("/passkeys", Uro.PasskeyController, :register)
+      delete("/passkeys/:id", Uro.PasskeyController, :delete)
     end
 
     scope "/session" do
@@ -109,6 +113,8 @@ defmodule Uro.Router do
 
     scope "/login" do
       post("/", Uro.AuthenticationController, :login)
+      post("/passkey/challenge", Uro.PasskeyController, :login_challenge)
+      post("/passkey", Uro.PasskeyController, :login)
 
       scope "/:provider" do
         get("/", Uro.AuthenticationController, :login_with_provider)
