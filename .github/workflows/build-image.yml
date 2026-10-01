@@ -1,8 +1,6 @@
 name: build-image
 
 # Build and publish the uro (zone-backend) container image to ghcr.io.
-# Consumed by v-sekai-multiplayer-fabric/infra via the gateway_image / uro_image
-# tofu variable.
 
 on:
   push:
@@ -42,7 +40,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ghcr.io/v-sekai-multiplayer-fabric/zone-backend
+          images: ghcr.io/v-sekai-fire/zone-backend
           tags: |
             type=sha,format=short
             type=raw,value=latest,enable={{is_default_branch}}
