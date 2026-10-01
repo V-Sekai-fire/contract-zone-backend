@@ -41,6 +41,11 @@ if config_env() == :prod do
 
   config :uro, :weftfdb_extension, System.fetch_env!("URO_WEFTFDB_EXTENSION")
 
+  # The page a phone opens from the device sign-in QR; on a LAN deploy, the one public host.
+  config :uro,
+         :device_verification_uri,
+         System.get_env("DEVICE_VERIFICATION_URI", "#{URI.to_string(root_origin)}/device")
+
   # Passkeys bind to this origin's host, so it must not change once users have registered.
   config :uro, :webauthn,
     origin: System.get_env("WEBAUTHN_ORIGIN", URI.to_string(root_origin)),

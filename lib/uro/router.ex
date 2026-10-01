@@ -111,6 +111,17 @@ defmodule Uro.Router do
       delete("/", Uro.AuthenticationController, :logout)
     end
 
+    scope "/device" do
+      post("/code", Uro.DeviceGrantController, :code)
+      post("/token", Uro.DeviceGrantController, :token)
+
+      pipe_through([:authenticated_user])
+
+      get("/", Uro.DeviceGrantController, :show)
+      post("/approve", Uro.DeviceGrantController, :approve)
+      post("/deny", Uro.DeviceGrantController, :deny)
+    end
+
     scope "/login" do
       post("/", Uro.AuthenticationController, :login)
       post("/passkey/challenge", Uro.PasskeyController, :login_challenge)

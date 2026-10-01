@@ -34,6 +34,7 @@ config :uro,
          )
 
 config :uro, :webauthn, origin: "https://uro.test", rp_id: "uro.test"
+config :uro, :device_verification_uri, "https://uro.test/device"
 
 # Sessions and sealed second factors need a key base; the server stays off.
 config :uro, Uro.Endpoint,

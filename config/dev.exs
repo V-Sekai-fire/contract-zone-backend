@@ -25,3 +25,4 @@ config :uro, Uro.Repo,
   pool_size: 10
 
 config :uro, :webauthn, origin: "http://localhost:4000", rp_id: "localhost"
+config :uro, :device_verification_uri, "http://localhost:4000/device"

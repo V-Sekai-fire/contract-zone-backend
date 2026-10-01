@@ -54,6 +54,10 @@ defmodule Uro.FallbackController do
     json_error(conn, code: :unauthorized, message: "Second factor required")
   end
 
+  def call(conn, {:error, :invalid_client}) do
+    json_error(conn, code: :bad_request, message: "A client_id is required")
+  end
+
   def call(conn, {:error, :invalid_passkey}) do
     json_error(conn, code: :unauthorized, message: "Invalid passkey")
   end
