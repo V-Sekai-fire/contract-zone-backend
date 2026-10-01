@@ -22,7 +22,7 @@ jobs:
       TEST_DATABASE: "file:uro_test.v1?vfs=weft_fdb"
       WEFT_FDB_CLUSTER_FILE: /etc/foundationdb/fdb.cluster
       URO_WEFTFDB_EXTENSION: ${{ github.workspace }}/datasource-store/build/weftfdb
-      STORE_REF: 39d1f32c2becf564365c667379bd045cd5381264
+      STORE_REF: bf5d552f5dee0fc871b474c5362ad782a49e89c7
 
     steps:
       - uses: actions/checkout@v4
