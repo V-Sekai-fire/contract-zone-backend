@@ -21,6 +21,7 @@ defmodule Uro.Application do
           Uro.Repo,
           Uro.Endpoint,
           Uro.VSekai.ZoneJanitor,
+          Uro.AgentTasks.Janitor,
           Uro.Pow.DetsCache,
           {Phoenix.PubSub, [name: Uro.PubSub, adapter: Phoenix.PubSub.PG2]},
           ExMarcel.TableWrapper,
