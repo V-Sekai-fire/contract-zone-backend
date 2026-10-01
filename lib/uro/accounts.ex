@@ -124,13 +124,18 @@ defmodule Uro.Accounts do
   #   end
   # end
 
+  # Without a mail server the account stays unconfirmed, and an admin confirms it
+  # (`Uro.AdminController.confirm_user`). Nothing an unconfirmed account calls is refused for
+  # it, so registration completes either way.
   def send_confirmation_email(%{email_confirmed_at: nil} = user) do
-    {:ok, confirmation_token, _} = EmailConfirmationToken.new(user)
-    confirmed_user = %{user | email_confirmed_at: DateTime.utc_now()}
+    if Uro.Mailer.attached?() do
+      {:ok, confirmation_token, _} = EmailConfirmationToken.new(user)
+      confirmed_user = %{user | email_confirmed_at: DateTime.utc_now()}
 
-    {:ok, _} =
-      Uro.Mailer.confirmation_email(confirmation_token)
-      |> Uro.Mailer.deliver_to(confirmed_user)
+      {:ok, _} =
+        Uro.Mailer.confirmation_email(confirmation_token)
+        |> Uro.Mailer.deliver_to(confirmed_user)
+    end
 
     :ok
   end

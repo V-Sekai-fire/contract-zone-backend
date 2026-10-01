@@ -66,7 +66,7 @@ defmodule Uro.VSekai do
   def get_zone!(id) do
     Zone
     |> Repo.get!(id)
-    |> Repo.preload(user: [:user])
+    |> Repo.preload(user: [:user_privilege_ruleset])
   end
 
   def create_zone(attrs \\ %{}) do

@@ -194,6 +194,7 @@ defmodule Uro.UserController do
   operation(:create_client,
     operation_id: "signupClient",
     summary: "Create an Account from Game client request",
+    description: "Replies in the same shape as `POST /session`, which the game client parses.",
     responses: [
       ok: {
         "",
@@ -228,18 +229,24 @@ defmodule Uro.UserController do
            conn <- Pow.Plug.create(conn, user) do
         {user, conn}
       else
-        any ->
-          Repo.rollback(any)
+        {:error, reason} ->
+          Repo.rollback(reason)
       end
     end)
     |> case do
-      {:ok, {_, conn}} ->
-        {:ok, session} = current_session(conn)
+      {:ok, {user, conn}} ->
+        # The same shape as a sign-in: the game client feeds both through one session parser.
+        user = Accounts.get_user!(user.id)
 
-        json(
-          conn,
-          Session.to_json_schema(session)
-        )
+        json(conn, %{
+          data: %{
+            access_token: conn.assigns[:access_token],
+            renewal_token: conn.assigns[:access_token],
+            user: User.to_json_schema(user, conn),
+            user_privilege_ruleset:
+              UserPrivilegeRuleset.to_json_schema(user.user_privilege_ruleset)
+          }
+        })
 
       {:error, reason} ->
         {:error, reason}
