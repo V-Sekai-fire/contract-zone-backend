@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
-# Uro and its FoundationDB, each in its own bubblewrap sandbox on a private internal network
-# with no route out: the runtime half of the offline deploy (#76). Building still fetches.
+# Uro, its FoundationDB and the VictoriaMetrics suite, each in its own bubblewrap sandbox on a
+# private internal network with no route out: the runtime half of the offline deploy (#76).
+# Building still fetches.
 name: Offline
 
 on:
@@ -69,7 +70,22 @@ jobs:
           mix deps.get
           mix compile
 
-      - name: Run FoundationDB and Uro on the private network
+      - name: Fetch the VictoriaMetrics suite, pinned by sha256 (online, the build half)
+        run: |
+          mkdir -p victoria
+          while read -r sha url; do
+            curl -fsSL -o victoria/pkg.tar.gz "$url"
+            echo "$sha  victoria/pkg.tar.gz" | sha256sum -c -
+            tar -xzf victoria/pkg.tar.gz -C victoria
+          done <<'EOF'
+          1b495bde563825cf83dc7c0425a9d8fa03e7214858e0949f9177efc6bb1f8bfc https://github.com/VictoriaMetrics/VictoriaMetrics/releases/download/v1.153.0/victoria-metrics-linux-amd64-v1.153.0.tar.gz
+          8ad858111778b211a98729dca1bd640edbd06c4d5b2acece8e040be0c1aa5a83 https://github.com/VictoriaMetrics/VictoriaLogs/releases/download/v1.51.1/victoria-logs-linux-amd64-v1.51.1.tar.gz
+          67be031fb00635929b2d02a6e2ce7e5ebc8b2929f8e0d79fb54ab48bff0ca966 https://github.com/VictoriaMetrics/VictoriaTraces/releases/download/v0.12.0/victoria-traces-linux-amd64-v0.12.0.tar.gz
+          EOF
+          rm victoria/pkg.tar.gz
+          ls -l victoria
+
+      - name: Run FoundationDB, Uro and the VictoriaMetrics suite on the private network
         run: tools/offline/run.sh
 
       - name: Control (the same sandbox refuses a fetch past the machine)

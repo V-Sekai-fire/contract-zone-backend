@@ -43,3 +43,6 @@ config :uro, Uro.Endpoint,
 
 # The tests release leases themselves; the janitor stays out of the sandbox.
 config :uro, :agent_task_janitor_interval, 24 * 60 * 60 * 1000
+
+# No collector in tests; tools/offline turns the exporter on against its own suite.
+config :opentelemetry, traces_exporter: :none

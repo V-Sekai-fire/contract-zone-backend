@@ -82,3 +82,6 @@ burrito_out/
 /priv/*.db
 /priv/*.db-shm
 /priv/*.db-wal
+
+# The offline harness fetches the VictoriaMetrics suite here.
+/victoria/
