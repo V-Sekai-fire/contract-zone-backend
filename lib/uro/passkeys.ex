@@ -125,7 +125,8 @@ defmodule Uro.Passkeys do
           "signature" => sig
         } = params
       ) do
-    with {:ok, challenge} <- spend(LoginChallenge, from(c in LoginChallenge, where: c.id == ^cid)),
+    with {:ok, challenge} <-
+           spend(LoginChallenge, from(c in LoginChallenge, where: c.id == ^cid)),
          {:ok, cred} <- d64(cred),
          {:ok, auth_data} <- d64(auth_data),
          {:ok, client_data} <- d64(client_data),
