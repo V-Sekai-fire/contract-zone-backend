@@ -19,7 +19,7 @@ defmodule Uro do
     │  /*          → frontend:3000  (Next.js web UI; not required for PoC)
     ▼
   uro:4000  (this application, Phoenix/Bandit)
-    ├── crdb:26257        CockroachDB single-node
+    ├── uro.v1            SQLite in-process on the weft_fdb VFS, pages in FoundationDB
     └── versitygw:7070    VersityGW S3-compatible object store (POSIX backend)
 
   zone-700a.chibifire.com

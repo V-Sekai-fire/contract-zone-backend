@@ -13,13 +13,13 @@ defmodule Uro.Application do
     # config/prod.exs.
     OpentelemetryPhoenix.setup(adapter: :bandit)
     OpentelemetryEcto.setup([:uro, :repo])
+    Uro.Repo.WeftFdb.load_configured!()
 
     children =
       if System.get_env("MINIMAL_START") == "true",
         do: [],
         else: [
           Uro.Repo,
-          Uro.Repo.Migration,
           Uro.Endpoint,
           Uro.VSekai.ZoneJanitor,
           Uro.Pow.DetsCache,

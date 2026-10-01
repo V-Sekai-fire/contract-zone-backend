@@ -60,11 +60,8 @@ defmodule Uro.StorageController do
   # List baker containers (includes exited)
   docker ps -a --filter ancestor=multiplayer-fabric-godot-baker:latest
 
-  # Confirm baked_url set in CockroachDB
-  docker exec multiplayer-fabric-hosting-crdb-1 \\
-    /cockroach/cockroach sql --insecure \\
-    -e "SELECT id, name, baked_url IS NOT NULL FROM vsekai.shared_files \\
-        ORDER BY inserted_at DESC LIMIT 5;"
+  # Confirm baked_url set
+  bin/uro rpc 'Uro.Repo.query!("SELECT id, name, baked_url IS NOT NULL FROM shared_files ORDER BY created_at DESC LIMIT 5") |> IO.inspect()' 
 
   # Confirm .caidx present in VersityGW
   AWS_ACCESS_KEY_ID=minioadmin AWS_SECRET_ACCESS_KEY=minioadmin \\

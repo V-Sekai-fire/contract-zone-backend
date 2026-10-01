@@ -77,3 +77,8 @@ lean/.lake/
 # compiled .o/.a output is not.
 c_src/thirdparty/build/
 burrito_out/
+
+# SQLite databases written by dev and test runs
+/priv/*.db
+/priv/*.db-shm
+/priv/*.db-wal

@@ -19,12 +19,7 @@ config :phoenix, :plug_init_mode, :runtime
 
 config :uro, Uro.Repo,
   show_sensitive_data_on_connection_error: true,
-  url: System.get_env("DATABASE_URL"),
-  username: "vsekai",
-  password: "vsekai",
-  hostname: "localhost",
-  port: 26257,
-  database: "vsekai",
+  database: System.get_env("URO_DATABASE", Path.expand("../priv/uro_dev.db", __DIR__)),
   stacktrace: true,
   migration_lock: false,
   pool_size: 10
