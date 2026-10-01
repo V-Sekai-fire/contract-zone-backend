@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
-# Uro and its FoundationDB run with the network unshared (bubblewrap, loopback only): the
-# runtime half of the offline deploy (contract-zone-backend#76). Building still fetches.
+# Uro and its FoundationDB, each in its own bubblewrap sandbox on a private internal network
+# with no route out: the runtime half of the offline deploy (#76). Building still fetches.
 name: Offline
 
 on:
@@ -69,7 +69,7 @@ jobs:
           mix deps.get
           mix compile
 
-      - name: Run Uro and FoundationDB with the network unshared
+      - name: Run FoundationDB and Uro on the private network
         run: tools/offline/run.sh
 
       - name: Control (the same sandbox refuses a fetch past the machine)
