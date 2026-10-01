@@ -89,6 +89,9 @@ defmodule Uro.Router do
     scope "/profile" do
       pipe_through([:authenticated_user])
       get("/", Uro.UserController, :show_current)
+      post("/totp", Uro.SecondFactorController, :begin_totp)
+      post("/totp/confirm", Uro.SecondFactorController, :confirm_totp)
+      delete("/totp", Uro.SecondFactorController, :disable_totp)
     end
 
     scope "/session" do

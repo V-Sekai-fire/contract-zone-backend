@@ -58,6 +58,7 @@ defmodule Uro.AuthenticationController do
   alias Uro.Accounts.UserPrivilegeRuleset
   alias Uro.Endpoint
   alias Uro.Helpers
+  alias Uro.SecondFactor
   alias Uro.Session
 
   action_fallback(Uro.FallbackController)
@@ -249,36 +250,58 @@ defmodule Uro.AuthenticationController do
     end
   end
 
-  defp validate_credentials(conn, %{"username" => username, "password" => password}) do
+  defp validate_credentials(conn, %{"username" => username, "password" => password} = credentials) do
     Accounts.get_by_username(username)
     |> case do
       %User{email: email} ->
-        Pow.Plug.authenticate_user(conn, %{"email" => email, "password" => password})
+        authenticate(conn, %{"email" => email, "password" => password}, credentials)
 
       _ ->
         {:error, conn}
     end
   end
 
-  defp validate_credentials(conn, %{
-         "username_or_email" => username_or_email,
-         "password" => password
-       }) do
+  defp validate_credentials(
+         conn,
+         %{"username_or_email" => username_or_email, "password" => password} = credentials
+       ) do
     Accounts.get_by_username_or_email(username_or_email)
     |> case do
       %User{email: email} ->
-        Pow.Plug.authenticate_user(conn, %{"email" => email, "password" => password})
+        authenticate(conn, %{"email" => email, "password" => password}, credentials)
 
       _ ->
         {:error, conn}
     end
   end
 
-  defp validate_credentials(conn, %{"email" => email, "password" => password}) do
-    Pow.Plug.authenticate_user(conn, %{"email" => email, "password" => password})
+  defp validate_credentials(conn, %{"email" => email, "password" => password} = credentials) do
+    authenticate(conn, %{"email" => email, "password" => password}, credentials)
   end
 
   defp validate_credentials(conn, _), do: {:error, conn}
+
+  # Pow.Plug.authenticate_user/2 with the second step between checking the password and
+  # creating the session.
+  defp authenticate(conn, params, credentials) do
+    config = Pow.Plug.fetch_config(conn)
+
+    case Pow.Operations.authenticate(params, config) do
+      nil ->
+        {:error, conn}
+
+      user ->
+        case SecondFactor.check(user, credentials) do
+          :ok -> {:ok, Pow.Plug.create(conn, user, config)}
+          {:error, reason} -> {:error, reason}
+        end
+    end
+  end
+
+  defp login_failure(reason) when reason in [:second_factor_required, :invalid_second_factor],
+    do: {:error, reason}
+
+  defp login_failure(_), do: {:error, :invalid_credentials}
 
   operation(:login,
     operation_id: "login",
@@ -297,7 +320,9 @@ defmodule Uro.AuthenticationController do
             required: [:username, :password],
             properties: %{
               username: User.sensitive_json_schema().properties.username,
-              password: %Schema{type: :string}
+              password: %Schema{type: :string},
+              totp_code: %Schema{type: :string},
+              backup_code: %Schema{type: :string}
             }
           },
           %Schema{
@@ -306,7 +331,9 @@ defmodule Uro.AuthenticationController do
             required: [:email, :password],
             properties: %{
               email: User.sensitive_json_schema().properties.email,
-              password: %Schema{type: :string}
+              password: %Schema{type: :string},
+              totp_code: %Schema{type: :string},
+              backup_code: %Schema{type: :string}
             }
           },
           %Schema{
@@ -315,7 +342,9 @@ defmodule Uro.AuthenticationController do
             required: [:username_or_email, :password],
             properties: %{
               username_or_email: %Schema{type: :string},
-              password: %Schema{type: :string}
+              password: %Schema{type: :string},
+              totp_code: %Schema{type: :string},
+              backup_code: %Schema{type: :string}
             }
           }
         ]
@@ -342,8 +371,8 @@ defmodule Uro.AuthenticationController do
       {:ok, conn} ->
         get_current_session(conn, nil)
 
-      {:error, _} ->
-        {:error, :invalid_credentials}
+      {:error, reason} ->
+        login_failure(reason)
     end
   end
 
@@ -370,7 +399,9 @@ defmodule Uro.AuthenticationController do
                 required: [:username, :password],
                 properties: %{
                   username: User.sensitive_json_schema().properties.username,
-                  password: %Schema{type: :string}
+                  password: %Schema{type: :string},
+                  totp_code: %Schema{type: :string},
+                  backup_code: %Schema{type: :string}
                 }
               },
               %Schema{
@@ -379,7 +410,9 @@ defmodule Uro.AuthenticationController do
                 required: [:email, :password],
                 properties: %{
                   email: User.sensitive_json_schema().properties.email,
-                  password: %Schema{type: :string}
+                  password: %Schema{type: :string},
+                  totp_code: %Schema{type: :string},
+                  backup_code: %Schema{type: :string}
                 }
               },
               %Schema{
@@ -388,7 +421,9 @@ defmodule Uro.AuthenticationController do
                 required: [:username_or_email, :password],
                 properties: %{
                   username_or_email: %Schema{type: :string},
-                  password: %Schema{type: :string}
+                  password: %Schema{type: :string},
+                  totp_code: %Schema{type: :string},
+                  backup_code: %Schema{type: :string}
                 }
               }
             ]
@@ -429,8 +464,8 @@ defmodule Uro.AuthenticationController do
           }
         })
 
-      {:error, _} ->
-        {:error, :invalid_credentials}
+      {:error, reason} ->
+        login_failure(reason)
     end
   end
 
