@@ -257,7 +257,7 @@ defmodule Uro.Accounts.User do
   def to_json_schema(list, conn) when is_list(list), do: Enum.map(list, &to_json_schema(&1, conn))
 
   def to_json_schema(%__MODULE__{id: user_id} = user, %{assigns: %{current_user: %{id: user_id}}}),
-      do: to_sensitive_json_schema(user)
+    do: to_sensitive_json_schema(user)
 
   def to_json_schema(%__MODULE__{} = user, _), do: to_limited_json_schema(user)
 
