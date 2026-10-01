@@ -217,8 +217,9 @@ defmodule Uro.UserController do
     }
 
     Repo.transaction(fn ->
-      with :ok <-
-             if(api_key == System.get_env("SIGNUP_API_KEY"),
+      with :ok <- if(Uro.Registration.open?(), do: :ok, else: {:error, :registration_closed}),
+           :ok <-
+             if(Uro.Registration.signup_key_valid?(api_key),
                do: :ok,
                else: {:error, :insufficient_permission}
              ),

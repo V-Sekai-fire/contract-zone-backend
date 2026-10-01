@@ -68,6 +68,7 @@ defmodule Uro.AuthenticationController do
     title: "ProviderID",
     description: "An ID representing an OAuth2 provider.",
     type: :string,
+    enum: ["discord", "github", "google"],
     example: "github"
   }
 
@@ -189,6 +190,12 @@ defmodule Uro.AuthenticationController do
 
         {:ok, _, conn} = Plug.create_user(conn, user_identity_params, user_params)
         login_success(conn, params)
+
+      {:error, conn = %{private: %{pow_assent_callback_error: :registration_closed}}} ->
+        login_error(conn, %{
+          error: "registration_closed",
+          error_description: "Registration is closed; this sign-in has no Uro account yet"
+        })
 
       {:error,
        conn = %{

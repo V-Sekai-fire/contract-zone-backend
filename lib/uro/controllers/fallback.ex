@@ -46,6 +46,10 @@ defmodule Uro.FallbackController do
     json_error(conn, code: :forbidden, message: "Insufficient permission")
   end
 
+  def call(conn, {:error, :registration_closed}) do
+    json_error(conn, code: :forbidden, message: "Registration is closed")
+  end
+
   def call(conn, {:error, :account_locked}) do
     json_error(conn, code: :locked, message: "Account unavailable")
   end

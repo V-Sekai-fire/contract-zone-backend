@@ -41,6 +41,8 @@ config :uro, :pow,
 
 config :uro, :pow_assent, user_identities_context: Uro.UserIdentities
 
+config :uro, :registration_open, false
+
 config :waffle,
   storage: Waffle.Storage.Local
 

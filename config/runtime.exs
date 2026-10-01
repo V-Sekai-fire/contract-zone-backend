@@ -86,24 +86,33 @@ if config_env() == :prod do
             "https://developers.cloudflare.com/turnstile/get-started/."
         )
 
+  config :uro, :registration_open, System.get_env("URO_REGISTRATION_OPEN") == "true"
+
+  # Sign-in providers: Discord, GitHub and Google, each enabled by its client id.
   config :uro, :pow_assent,
     providers:
-      System.get_env()
-      |> Map.filter(fn {k, _} -> String.match?(k, ~r/^OAUTH2_.+_STRATEGY/) end)
-      |> Enum.map(fn {key, module_name} ->
-        key =
-          key
-          |> String.replace("OAUTH2_", "")
-          |> String.replace("_STRATEGY", "")
+      [
+        discord: Assent.Strategy.Discord,
+        github: Assent.Strategy.Github,
+        google: Assent.Strategy.Google
+      ]
+      |> Enum.flat_map(fn {name, strategy} ->
+        key = name |> Atom.to_string() |> String.upcase()
 
-        {
-          key |> String.downcase() |> String.to_atom(),
-          [
-            client_id: System.fetch_env!("OAUTH2_#{key}_CLIENT_ID"),
-            client_secret: System.fetch_env!("OAUTH2_#{key}_CLIENT_SECRET"),
-            strategy: Module.concat([module_name])
-          ]
-        }
+        case System.get_env("OAUTH2_#{key}_CLIENT_ID") do
+          nil ->
+            []
+
+          client_id ->
+            [
+              {name,
+               [
+                 client_id: client_id,
+                 client_secret: System.fetch_env!("OAUTH2_#{key}_CLIENT_SECRET"),
+                 strategy: strategy
+               ]}
+            ]
+        end
       end)
 
   config :uro, Uro.Mailer,
