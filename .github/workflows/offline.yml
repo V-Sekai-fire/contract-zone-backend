@@ -21,7 +21,7 @@ jobs:
     env:
       MIX_ENV: test
       URO_WEFTFDB_EXTENSION: ${{ github.workspace }}/datasource-store/build/weftfdb
-      STORE_REF: 39d1f32c2becf564365c667379bd045cd5381264
+      STORE_REF: bf5d552f5dee0fc871b474c5362ad782a49e89c7
 
     steps:
       - uses: actions/checkout@v4

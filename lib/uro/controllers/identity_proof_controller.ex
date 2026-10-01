@@ -44,15 +44,22 @@ defmodule Uro.IdentityProofController do
     |> Uro.UserRelations.get_identity_proof_as!(conn.assigns[:current_user])
     |> case do
       nil ->
-        put_status(
-          conn,
-          400
-        )
+        conn
+        |> put_status(404)
+        |> json(%{error: %{status: 404, message: "No such identity proof"}})
 
       identity_proof ->
-        conn
-        |> put_status(200)
-        |> json(%{data: %{identity_proof: identity_proof}})
+        alias Uro.Accounts.User
+
+        json(conn, %{
+          data: %{
+            identity_proof: %{
+              id: identity_proof.id,
+              user_from: User.to_limited_json_schema(identity_proof.user_from),
+              user_to: User.to_limited_json_schema(identity_proof.user_to)
+            }
+          }
+        })
     end
   end
 end

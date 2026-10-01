@@ -128,7 +128,8 @@ defmodule Uro.UserRelations do
         nil
 
       identity_proof ->
-        if identity_proof.user_from == requester or identity_proof.user_to == requester do
+        if identity_proof.user_from_id == requester.id or
+             identity_proof.user_to_id == requester.id do
           identity_proof
         else
           nil
