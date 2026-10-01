@@ -18,7 +18,11 @@ jobs:
 
     env:
       MIX_ENV: test
-      TEST_DATABASE_URL: "postgresql://root@localhost:26257/vsekai_test?sslmode=disable"
+      # The test database is a weft_fdb one: SQLite in the BEAM, its pages in FoundationDB.
+      TEST_DATABASE: "file:uro_test.v1?vfs=weft_fdb"
+      WEFT_FDB_CLUSTER_FILE: /etc/foundationdb/fdb.cluster
+      URO_WEFTFDB_EXTENSION: ${{ github.workspace }}/datasource-store/build/weftfdb
+      STORE_REF: 39d1f32c2becf564365c667379bd045cd5381264
 
     steps:
       - uses: actions/checkout@v4
@@ -38,16 +42,27 @@ jobs:
           key: ${{ runner.os }}-zone-backend-mix-${{ hashFiles('mix.lock') }}
           restore-keys: ${{ runner.os }}-zone-backend-mix-
 
-      - name: Start CockroachDB
+      - name: Start a single-node FoundationDB
         run: |
-          docker run -d --name crdb \
-            -p 26257:26257 -p 8080:8080 \
-            ghcr.io/v-sekai/cockroach:latest \
-            start-single-node --insecure
-          timeout 120 bash -c 'until docker exec crdb cockroach sql --insecure -e "SELECT 1" 2>/dev/null; do sleep 1; done'
+          curl -fsSLO https://github.com/apple/foundationdb/releases/download/7.3.63/foundationdb-clients_7.3.63-1_amd64.deb
+          curl -fsSLO https://github.com/apple/foundationdb/releases/download/7.3.63/foundationdb-server_7.3.63-1_amd64.deb
+          sudo dpkg -i foundationdb-clients_7.3.63-1_amd64.deb foundationdb-server_7.3.63-1_amd64.deb
+          timeout 120 bash -c 'until fdbcli --exec "status minimal" --timeout 5 | grep -q "available"; do sleep 2; done'
 
-      - name: Create test database
-        run: docker exec crdb cockroach sql --insecure -e "CREATE DATABASE IF NOT EXISTS vsekai_test;"
+      - name: Check out datasource-store at the pinned commit
+        uses: actions/checkout@v4
+        with:
+          repository: V-Sekai-fire/datasource-store
+          ref: ${{ env.STORE_REF }}
+          path: datasource-store
+
+      - name: Build the weftfdb extension
+        working-directory: datasource-store
+        run: |
+          sudo apt-get install -y -q cmake libsqlite3-dev
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+          cmake --build build --target weftfdb
+          ls -la build/weftfdb.so
 
       - name: Install dependencies
         run: mix deps.get
@@ -63,6 +78,20 @@ jobs:
           mix ecto.migrate
           mix run priv/repo/test_seeds.exs
           mix test --trace
+
+      - name: The test database lives in FoundationDB
+        run: |
+          keys=$(fdbcli --exec "getrangekeys weft/db/uro_test.v1/ weft/db/uro_test.v10 100" | grep -c "weft/db/uro_test.v1/")
+          echo "FoundationDB keys under weft/db/uro_test.v1/: $keys"
+          [ "$keys" -gt 0 ]
+          test ! -e uro_test.v1 && test ! -e priv/uro_test.v1
+
+      - name: Control (without the extension, the suite cannot open its database)
+        run: |
+          if env -u URO_WEFTFDB_EXTENSION mix test > control.txt 2>&1; then
+            cat control.txt; echo "the suite ran with no weft_fdb VFS registered"; exit 1
+          fi
+          grep -q "database_open_failed" control.txt
 
       - name: Cache Dialyzer PLTs
         uses: actions/cache@v4
