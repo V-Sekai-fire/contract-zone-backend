@@ -5,10 +5,13 @@ defmodule Uro.Router do
   use Plug.ErrorHandler
   use Uro.Helpers.API
 
+  # The status is the exception's own, so an unknown route is a 404 and not a 500, and an
+  # exit (a crashed task) still gets a JSON body instead of dropping the connection.
   defp handle_errors(conn, %{reason: reason}) do
     json_error(conn,
-      code: :internal_server_error,
-      message: Exception.message(reason)
+      code: reason |> Plug.Exception.status() |> Plug.Conn.Status.reason_atom(),
+      message:
+        if(is_exception(reason), do: Exception.message(reason), else: "Internal Server Error")
     )
   end
 
@@ -144,6 +147,7 @@ defmodule Uro.Router do
       pipe_through([:authenticated_admin])
 
       get("/", Uro.AdminController, :status)
+      post("/users/:id/confirm", Uro.AdminController, :confirm_user)
     end
 
     scope "/storage" do

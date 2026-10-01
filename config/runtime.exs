@@ -129,6 +129,9 @@ if config_env() == :prod do
     adapter: Swoosh.Adapters.Sendgrid,
     api_key: System.get_env("SENDGRID_API_KEY", "")
 
+  # The sender. Unset means no mail server is attached, and `Uro.Mailer.attached?/0` says so.
+  config :uro, :mail_from, System.get_env("MAIL_FROM")
+
   config :ex_aws,
     access_key_id: [{:system, "AWS_ACCESS_KEY_ID"}],
     secret_access_key: [{:system, "AWS_SECRET_ACCESS_KEY"}]
@@ -137,6 +140,10 @@ if config_env() == :prod do
     scheme: "http://",
     host: System.get_env("VERSITYGW_HOST", "versitygw"),
     port: String.to_integer(System.get_env("VERSITYGW_PORT", "7070"))
+
+  # User content (avatars, maps, props) goes to this bucket on the same object store. It was
+  # unset, so every upload crashed in Waffle before reaching the store.
+  config :waffle, bucket: System.get_env("UPLOAD_BUCKET", "zone-uploads")
 
   otel_endpoint =
     System.get_env("OTEL_EXPORTER_OTLP_ENDPOINT") ||

@@ -27,6 +27,18 @@ defmodule Uro.Mailer do
     end
   end
 
+  @doc """
+  Whether a mail server is attached: an adapter that delivers, with a sender to deliver
+  from. The Logger fallback and a missing sender both mean no, and a caller then does not
+  pretend to have sent anything.
+  """
+  def attached?() do
+    adapter = get_adapter()
+    adapter != nil and adapter != Swoosh.Adapters.Logger and is_binary(from_address())
+  end
+
+  defp from_address(), do: Application.get_env(:uro, :mail_from)
+
   def create_email(subject: subject, text: text, html: html) do
     %Swoosh.Email{}
     |> subject(subject)
@@ -47,6 +59,7 @@ defmodule Uro.Mailer do
       {:ok, %{}}
     else
       email
+      |> from({"Uro", from_address()})
       |> to({display_name, email_address})
       |> deliver(adapter: adapter)
     end
