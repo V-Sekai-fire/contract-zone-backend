@@ -30,17 +30,19 @@ defmodule Uro.RegistrationTest do
 
   test "a first sign-in through a provider creates no account while registration is closed" do
     Application.put_env(:uro, :registration_open, false)
+    before = Repo.aggregate(User, :count)
     assert {:error, :registration_closed} = UserIdentities.create_user(@identity, @user, @user_id)
-    assert Repo.aggregate(User, :count) == 0
+    assert Repo.aggregate(User, :count) == before
   end
 
   test "control: the same sign-in creates the account when registration is open" do
     Application.put_env(:uro, :registration_open, true)
+    before = Repo.aggregate(User, :count)
 
     assert {:ok, %User{username: "newcomer"}} =
              UserIdentities.create_user(@identity, @user, @user_id)
 
-    assert Repo.aggregate(User, :count) == 1
+    assert Repo.aggregate(User, :count) == before + 1
   end
 
   test "an unset sign-up key matches nothing, a null key included" do
