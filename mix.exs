@@ -122,6 +122,7 @@ defmodule Uro.MixProject do
       {:plug_static_index_html, "~> 1.0"},
       {:comeonin, "~> 5.3.2"},
       {:bcrypt_elixir, "~> 2.3"},
+      {:nimble_totp, "~> 1.0"},
       {:pow, "~> 1.0"},
       {:email_checker, "~> 0.1.4"},
       {:pow_assent, "~> 0.4.18"},

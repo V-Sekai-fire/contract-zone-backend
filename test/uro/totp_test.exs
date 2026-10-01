@@ -49,7 +49,7 @@ defmodule Uro.TOTPTest do
 
   test "the provisioning URI carries the base32 secret and the issuer" do
     uri = TOTP.uri(@secret, "me@example.test")
-    assert uri =~ "otpauth://totp/Uro%3Ame%40example.test?"
+    assert uri =~ "otpauth://totp/Uro:me@example.test?"
     assert uri =~ "secret=GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ"
     assert uri =~ "issuer=Uro"
   end
