@@ -267,7 +267,7 @@ defmodule Uro.UserController do
     with {:ok, current_user} <- current_user(conn),
          {:ok, user} <- user_from_key(conn, user_id),
          true <-
-           User.admin?(current_user) or user.id == current_user.id ||
+           (User.admin?(current_user) or user.id == current_user.id) ||
              {
                :error,
                :unauthorized,
@@ -439,7 +439,7 @@ defmodule Uro.UserController do
          {:ok, self} <- user_confirmed_email(self),
          {:ok, user} <- user_from_key(conn, user_id),
          true <-
-           User.admin?(self) or user.id == self.id ||
+           (User.admin?(self) or user.id == self.id) ||
              {
                :error,
                :unauthorized,

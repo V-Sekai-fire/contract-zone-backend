@@ -19,7 +19,12 @@ defmodule Uro.Repo.WeftFdb do
 
     try do
       :ok = Exqlite.Sqlite3.enable_load_extension(conn, true)
-      :ok = Exqlite.Sqlite3.execute(conn, "SELECT load_extension('#{String.replace(path, "'", "''")}')")
+
+      :ok =
+        Exqlite.Sqlite3.execute(
+          conn,
+          "SELECT load_extension('#{String.replace(path, "'", "''")}')"
+        )
     after
       Exqlite.Sqlite3.close(conn)
     end

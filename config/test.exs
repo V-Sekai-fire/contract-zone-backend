@@ -19,4 +19,3 @@ config :uro,
            do: [pool_size: 1, journal_mode: :memory, locking_mode: :exclusive],
            else: [pool_size: 10]
          )
-
