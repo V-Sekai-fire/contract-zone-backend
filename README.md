@@ -8,19 +8,13 @@ Zone servers register themselves with Uro when they start and keep a heartbeat, 
 
 ## Build and run
 
-Copy `.env.example` to `.env`, fill it in, and start the stack:
-
-```sh
-docker compose up -d
-```
-
-To run Uro alone, with its development database in a local file:
+Run Uro with its development database in a local file:
 
 ```sh
 mix deps.get && mix ecto.setup && mix phx.server
 ```
 
-The build compiles a native sandbox library, so CMake and Ninja must be on the path.
+The build compiles a native sandbox library, so CMake and Ninja must be on the path. The `docker-compose.yml` stack does not match the current database and is not a supported way to run Uro.
 
 ## Licence
 
