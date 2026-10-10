@@ -36,7 +36,17 @@ export const LoginForm: FC = () => {
 				password: "",
 				username_or_email: email || ""
 			}}
-			mutationFn={async (body: LoginCredentials) => {
+			mutationFn={async ({
+				username_or_email,
+				password
+			}: {
+				username_or_email: string;
+				password: string;
+			}) => {
+				// The API takes either an email or a username; the form asks for one field.
+				const body: LoginCredentials = username_or_email.includes("@")
+					? { email: username_or_email, password }
+					: { password, username: username_or_email };
 				const { data, error } = await api.login({ body });
 
 				if (error || !data) throw error;

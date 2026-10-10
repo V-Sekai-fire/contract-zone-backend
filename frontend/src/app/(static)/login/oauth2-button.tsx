@@ -1,7 +1,7 @@
 "use client";
 
 import { ExternalLink } from "lucide-react";
-import { SiDiscord, SiGithub } from "@icons-pack/react-simple-icons";
+import { SiDiscord, SiGithub, SiGoogle } from "@icons-pack/react-simple-icons";
 
 import { useReturnIntent } from "~/hooks/return-intent";
 import { Button } from "~/components/button";
@@ -25,6 +25,10 @@ export const providerMetadata: Record<
 	github: {
 		Icon: SiGithub,
 		name: "GitHub"
+	},
+	google: {
+		Icon: SiGoogle,
+		name: "Google"
 	}
 };
 
@@ -55,7 +59,7 @@ export const OAuth2Button: FC<{ providerId: ProviderID }> = ({
 export const OAuth2ButtonGroup: FC = () => {
 	return (
 		<div className="grid grid-cols-3 gap-4">
-			{Object.keys(providerMetadata).map((providerId) => (
+			{(Object.keys(providerMetadata) as Array<ProviderID>).map((providerId) => (
 				<OAuth2Button key={providerId} providerId={providerId} />
 			))}
 		</div>
