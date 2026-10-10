@@ -85,3 +85,6 @@ burrito_out/
 
 # The offline harness fetches the VictoriaMetrics suite here.
 /victoria/
+
+# macOS Finder metadata
+.DS_Store
