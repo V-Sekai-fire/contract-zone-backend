@@ -50,7 +50,7 @@ CFLAGS=(
   -I geogram -I "$GEOGRAM/third_party" -I "$GEOGRAM/third_party/OpenNL"
 )
 
-LEAN_INC="c:/Users/ernes/.elan/toolchains/leanprover--lean4---v4.30.0/include"
+LEAN_INC="c:/Users/ernes/.elan/toolchains/leanprover--lean4---v4.34.1/include"
 
 # ---- geogram allow/deny lists (mirrors modules/cassie/SCsub) ----
 # boolean_expression.cpp (CSG expression parser) is NOT skipped here,
