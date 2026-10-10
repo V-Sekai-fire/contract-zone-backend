@@ -46,3 +46,7 @@ config :uro, :agent_task_janitor_interval, 24 * 60 * 60 * 1000
 
 # No collector in tests; tools/offline turns the exporter on against its own suite.
 config :opentelemetry, traces_exporter: :none
+
+# Tests poll the lobby with their own probes, never the network.
+config :uro, :lobby_poller, false
+config :uro, :lobby_basis_servers, []

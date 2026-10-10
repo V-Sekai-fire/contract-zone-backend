@@ -149,6 +149,8 @@ defmodule Uro.Router do
 
     post "/loop/commit", Uro.LoopController, :commit
 
+    get "/lobby/servers", Uro.LobbyController, :servers
+
     scope "/admin" do
       pipe_through([:authenticated_admin])
 

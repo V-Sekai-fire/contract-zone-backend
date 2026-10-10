@@ -22,6 +22,7 @@ defmodule Uro.Application do
           Uro.Endpoint,
           Uro.VSekai.ZoneJanitor,
           Uro.AgentTasks.Janitor,
+          lobby_poller(),
           Uro.Pow.DetsCache,
           {Phoenix.PubSub, [name: Uro.PubSub, adapter: Phoenix.PubSub.PG2]},
           ExMarcel.TableWrapper,
@@ -33,7 +34,11 @@ defmodule Uro.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Uro.Supervisor]
-    Supervisor.start_link(children, opts)
+    Supervisor.start_link(Enum.reject(children, &is_nil/1), opts)
+  end
+
+  defp lobby_poller do
+    if Application.get_env(:uro, :lobby_poller, true), do: Uro.Lobby.Poller
   end
 
   # Tell Phoenix to update the endpoint configuration
