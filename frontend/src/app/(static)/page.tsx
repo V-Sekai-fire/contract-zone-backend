@@ -3,6 +3,7 @@ import { InlineLink } from "~/components/link";
 
 import { Footer } from "../footer";
 
+import { RefreshRing } from "./refresh-ring";
 import { Section, SectionTitle } from "./section";
 
 import type { Metadata } from "next";
@@ -75,16 +76,19 @@ function ServerTable({ servers }: { servers: Array<LobbyServer> }) {
 export default async function LobbyPage() {
 	const { data, error } = await lobbyServers();
 	const servers = data?.servers ?? [];
-	const minutes = data ? Math.round(data.poll_interval_s / 60) : null;
 
 	return (
 		<main className="mx-auto flex w-full max-w-screen-lg flex-col gap-4 px-4 lg:pt-16">
 			<Section className="py-8">
 				<h1 className="text-3xl font-medium">OMI Lobby</h1>
-				<p className="text-lg">
-					Open metaverse servers you can join.
-					{minutes ? ` Player counts are polled every ${minutes} minutes.` : ""}
-				</p>
+				<p className="text-lg">Open metaverse servers you can join.</p>
+				{data ? (
+					<RefreshRing
+						intervalSeconds={data.poll_interval_s}
+						nextPollAt={data.next_poll_at}
+						polledAt={data.polled_at}
+					/>
+				) : null}
 				{error || !data ? (
 					<p className="text-red-700">The server list is unavailable right now.</p>
 				) : null}
