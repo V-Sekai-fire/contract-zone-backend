@@ -21,6 +21,9 @@ concurrency:
   group: casync-interop-${{ github.ref }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
+permissions:
+  contents: write
+
 jobs:
   interop:
     name: aria_storage ↔ desync
