@@ -244,6 +244,30 @@ defmodule Uro.LobbyTest do
              } = Jason.decode!(conn.resp_body)
     end
 
+    test "the list says when the last poll ran and when the next one is due" do
+      polled = ~U[2026-10-10 19:00:00Z]
+      :ok = Lobby.record_poll(polled)
+
+      conn = get(build_conn(), "/api/v1/lobby/servers")
+
+      assert %{
+               "polled_at" => "2026-10-10T19:00:00Z",
+               "next_poll_at" => "2026-10-10T19:10:00Z"
+             } = Jason.decode!(conn.resp_body)
+    end
+
+    test "control: before the first poll there is no due time to count down to" do
+      :ok = Lobby.record_poll(nil)
+      conn = get(build_conn(), "/api/v1/lobby/servers")
+      assert %{"polled_at" => nil, "next_poll_at" => nil} = Jason.decode!(conn.resp_body)
+    end
+
+    test "a poll records its own time" do
+      :ok = Lobby.record_poll(nil)
+      :ok = Lobby.poll(%{basis: fn _, _ -> {:error, :timeout} end, overte: fn -> {:ok, []} end})
+      assert %DateTime{} = Lobby.last_poll()
+    end
+
     test "the API server keeps its health check at / and /health; the frontend owns the page" do
       for path <- ["/", "/health"] do
         conn = get(build_conn(), path)

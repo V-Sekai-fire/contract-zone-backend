@@ -37,10 +37,12 @@ defmodule Uro.LobbyController do
         %Schema{
           title: "LobbyServers",
           type: :object,
-          required: [:servers, :poll_interval_s],
+          required: [:servers, :poll_interval_s, :polled_at, :next_poll_at],
           properties: %{
             servers: %Schema{type: :array, items: @server},
-            poll_interval_s: %Schema{type: :integer}
+            poll_interval_s: %Schema{type: :integer},
+            polled_at: %Schema{type: :string, format: :"date-time", nullable: true},
+            next_poll_at: %Schema{type: :string, format: :"date-time", nullable: true}
           }
         }
       }
@@ -48,9 +50,14 @@ defmodule Uro.LobbyController do
   )
 
   def servers(conn, _params) do
+    interval_s = div(Uro.Lobby.Poller.interval_ms(), 1000)
+    polled_at = Lobby.last_poll()
+
     json(conn, %{
       servers: Enum.map(Lobby.list_servers(), &to_json/1),
-      poll_interval_s: div(Uro.Lobby.Poller.interval_ms(), 1000)
+      poll_interval_s: interval_s,
+      polled_at: polled_at,
+      next_poll_at: polled_at && DateTime.add(polled_at, interval_s, :second)
     })
   end
 

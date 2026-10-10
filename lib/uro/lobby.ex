@@ -49,8 +49,17 @@ defmodule Uro.Lobby do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
     poll_basis(probes.basis, now)
     poll_overte(probes.overte, now)
+    record_poll(now)
+  end
+
+  @doc "Records when the last poll ran, so the page can count down to the next one."
+  def record_poll(at) do
+    :persistent_term.put({__MODULE__, :last_poll}, at)
     :ok
   end
+
+  @doc "When the last poll ran; nil before the first one."
+  def last_poll, do: :persistent_term.get({__MODULE__, :last_poll}, nil)
 
   defp poll_basis(probe, now) do
     Server
