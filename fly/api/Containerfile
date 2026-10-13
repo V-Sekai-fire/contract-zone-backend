@@ -1,0 +1,35 @@
+# Uro on glibc for Fly: FoundationDB ships libfdb_c for glibc only.
+FROM docker.io/library/elixir:1.17-otp-27
+ARG FDB_VERSION=7.3.76
+ARG STORE_REF=bf5d552f5dee0fc871b474c5362ad782a49e89c7
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      cmake ninja-build build-essential git curl ca-certificates libsqlite3-dev python3 \
+ && curl -fsSL -o /tmp/c.deb https://github.com/apple/foundationdb/releases/download/${FDB_VERSION}/foundationdb-clients_${FDB_VERSION}-1_amd64.deb \
+ && dpkg -i /tmp/c.deb && rm /tmp/c.deb && rm -rf /var/lib/apt/lists/*
+RUN git clone -q https://github.com/V-Sekai-fire/datasource-store /store \
+ && git -C /store checkout -q ${STORE_REF} \
+ && cmake -S /store -B /store/build -DCMAKE_BUILD_TYPE=Release \
+ && cmake --build /store/build --target weftfdb -j4
+ENV MIX_ENV=prod
+WORKDIR /app
+RUN mix local.hex --force && mix local.rebar --force
+COPY mix.exs mix.lock ./
+COPY apps ./apps
+RUN mix do deps.get, patch.exmarcel, deps.compile
+COPY config ./config
+COPY priv ./priv
+COPY lib ./lib
+COPY Makefile ./
+COPY c_src ./c_src
+RUN mix compile
+# The web image copies this spec from here at build time.
+RUN mkdir -p frontend/src/__generated && mix run --no-start -e ' \
+  for k <- [:url, :frontend_url, :root_origin], do: Application.put_env(:uro, k, URI.new!("http://localhost")); \
+  Mix.Task.run("openapi.spec.json", ~w(--spec Uro.OpenAPI.Specification --pretty --vendor-extensions=false ./frontend/src/__generated/openapi.json))'
+COPY fly/api/entry.sh /entry.sh
+ENV URO_WEFTFDB_EXTENSION=/store/build/weftfdb \
+    WEFT_FDB_CLUSTER_FILE=/etc/foundationdb/fdb.cluster \
+    UPLOAD_STORAGE=local \
+    PORT=4000
+EXPOSE 4000
+ENTRYPOINT ["/bin/sh", "/entry.sh"]
