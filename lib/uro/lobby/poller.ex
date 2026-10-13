@@ -29,6 +29,9 @@ defmodule Uro.Lobby.Poller do
       e -> Logger.warning("lobby poll failed: #{Exception.message(e)}")
     end
 
+    # weft_fdb folds its write log only when the database closes; reopen so it cannot grow forever.
+    Uro.Repo.disconnect_all(0)
+
     Process.send_after(self(), :poll, @interval_ms)
     {:noreply, state}
   end
