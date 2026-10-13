@@ -1,0 +1,26 @@
+# V-Sekai lobby web (Next.js). Public; calls the API server-side over Flycast.
+#   fly deploy --config fly/web/fly.toml --build-arg uro_image=registry.fly.io/vsekai-lobby-api:<tag>
+app = "vsekai-lobby"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "../../frontend/Dockerfile"
+
+[env]
+  HOSTNAME = "0.0.0.0"
+  PORT = "3000"
+  NEXT_PUBLIC_ORIGIN = "https://vsekai-lobby.fly.dev"
+  NEXT_PUBLIC_API_ORIGIN = "https://vsekai-lobby.fly.dev"
+  API_ORIGIN = "http://vsekai-lobby-api.flycast"
+  NEXT_PUBLIC_TURNSTILE_SITEKEY = "0"
+
+[http_service]
+  internal_port = 3000
+  force_https = true
+  auto_stop_machines = "off"
+  min_machines_running = 1
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

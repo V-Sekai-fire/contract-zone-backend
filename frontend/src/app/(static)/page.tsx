@@ -11,7 +11,7 @@ import type { Metadata } from "next";
 // The list changes with every poll, so render it per request.
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: "OMI Lobby" };
+export const metadata: Metadata = { title: "V-Sekai Lobby" };
 
 type LobbyReply = NonNullable<Awaited<ReturnType<typeof lobbyServers>>["data"]>;
 type LobbyServer = LobbyReply["servers"][number];
@@ -80,7 +80,7 @@ export default async function LobbyPage() {
 	return (
 		<main className="mx-auto flex w-full max-w-screen-lg flex-col gap-4 px-4 lg:pt-16">
 			<Section className="py-8">
-				<h1 className="text-3xl font-medium">OMI Lobby</h1>
+				<h1 className="text-3xl font-medium">V-Sekai Lobby</h1>
 				<p className="text-lg">Open metaverse servers you can join.</p>
 				{data ? (
 					<RefreshRing

@@ -1,0 +1,24 @@
+# V-Sekai lobby API (Uro). Private: no public IPs, reached over Flycast by the web app only.
+#   fly deploy --config fly/api/fly.toml --no-public-ips
+app = "vsekai-lobby-api"
+primary_region = "sjc"
+
+[build]
+  dockerfile = "Containerfile"
+
+[env]
+  URO_DATABASE = "file:vsekai-lobby-dev.v1?vfs=weft_fdb"
+
+[[services]]
+  internal_port = 4000
+  protocol = "tcp"
+  auto_stop_machines = "off"
+  min_machines_running = 1
+  [[services.ports]]
+    port = 80
+    handlers = ["http"]
+
+[[vm]]
+  memory = "512mb"
+  cpu_kind = "shared"
+  cpus = 1

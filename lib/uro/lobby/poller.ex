@@ -23,7 +23,6 @@ defmodule Uro.Lobby.Poller do
   @impl true
   def handle_info(:poll, state) do
     try do
-      Uro.Lobby.seed_configured()
       :ok = Uro.Lobby.poll()
     rescue
       e -> Logger.warning("lobby poll failed: #{Exception.message(e)}")

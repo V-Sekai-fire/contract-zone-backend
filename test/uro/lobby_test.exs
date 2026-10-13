@@ -152,59 +152,121 @@ defmodule Uro.LobbyTest do
     end
   end
 
+  @basis "server1.basisvr.org:4296"
+  @answer %{name: "main basis server", motd: "another bright day", online: 1, capacity: 5000}
+
+  defp silent, do: fn _host, _port -> {:error, :timeout} end
+
   describe "polling" do
     setup do
-      {:ok, basis} =
-        Lobby.upsert_server(%{
-          platform: "basis",
-          external_id: "server1.basisvr.org:4296",
-          address: "server1.basisvr.org:4296",
-          name: "server1.basisvr.org",
-          client_url: "https://basisvr.org/"
-        })
-
-      %{basis: basis}
+      :ok = Lobby.reset()
     end
 
-    test "a poll records a Basis reply and the Overte directory's active domains", %{basis: basis} do
+    test "a poll records a Basis reply and the Overte directory's active domains" do
       probes = %{
-        basis: fn "server1.basisvr.org", 4296 ->
-          {:ok,
-           %{name: "main basis server", motd: "another bright day", online: 1, capacity: 5000}}
-        end,
+        basis: fn "server1.basisvr.org", 4296 -> {:ok, @answer} end,
         overte: fn -> {:ok, OverteDirectory.parse_places(@places)} end
       }
 
-      :ok = Lobby.poll(probes)
+      :ok = Lobby.poll(probes, [@basis])
 
-      basis = Lobby.get_server!(basis.id)
-      assert %{status: "up", name: "main basis server", online: 1, capacity: 5000} = basis
+      assert [%{status: "up", name: "main basis server", online: 1, capacity: 5000} = basis] =
+               Lobby.list_servers("basis")
+
       assert basis.last_seen_at
 
       assert [%{platform: "overte", name: "Hytrion", status: "up", online: 3}] =
                Lobby.list_servers("overte")
     end
 
-    test "control: a Basis server that does not answer is marked down and keeps its last name",
-         %{basis: basis} do
-      probes = %{
-        basis: fn _host, _port -> {:error, :timeout} end,
-        overte: fn -> {:ok, []} end
-      }
+    test "control: a Basis server that does not answer is down and keeps its last name" do
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:ok, []} end}, [@basis])
+      assert [%{status: "down", name: "server1.basisvr.org"}] = Lobby.list_servers("basis")
 
-      :ok = Lobby.poll(probes)
-      assert %{status: "down", name: "server1.basisvr.org"} = Lobby.get_server!(basis.id)
+      :ok =
+        Lobby.poll(%{basis: fn _, _ -> {:ok, @answer} end, overte: fn -> {:ok, []} end}, [@basis])
+
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:ok, []} end}, [@basis])
+
+      assert [%{status: "down", name: "main basis server", last_seen_at: %DateTime{}}] =
+               Lobby.list_servers("basis")
     end
 
-    test "an Overte domain that leaves the directory is marked down" do
+    test "an Overte domain that leaves the directory drops off the list" do
       :ok =
-        Lobby.poll(%{
-          basis: fn _, _ -> {:error, :timeout} end,
-          overte: fn -> {:ok, OverteDirectory.parse_places(@places)} end
-        })
+        Lobby.poll(
+          %{basis: silent(), overte: fn -> {:ok, OverteDirectory.parse_places(@places)} end},
+          []
+        )
 
-      :ok = Lobby.poll(%{basis: fn _, _ -> {:error, :timeout} end, overte: fn -> {:ok, []} end})
-      assert [%{name: "Hytrion", status: "down"}] = Lobby.list_servers("overte")
+      assert [%{name: "Hytrion"}] = Lobby.list_servers("overte")
+
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:ok, []} end}, [])
+      assert [] = Lobby.list_servers("overte")
+    end
+
+    test "control: an unreachable directory keeps the domains as last seen" do
+      :ok =
+        Lobby.poll(
+          %{basis: silent(), overte: fn -> {:ok, OverteDirectory.parse_places(@places)} end},
+          []
+        )
+
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:error, :timeout} end}, [])
+      assert [%{name: "Hytrion", status: "up"}] = Lobby.list_servers("overte")
+    end
+
+    test "the list never holds more than max_servers entries, however many are listed" do
+      flood =
+        for i <- 1..(Lobby.max_servers() + 5) do
+          %{
+            platform: "overte",
+            external_id: "d-#{i}",
+            address: "10.0.0.1:#{i}",
+            name: "d#{i}",
+            online: 0
+          }
+        end
+
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:ok, flood} end}, [])
+      assert length(Lobby.list_servers()) == Lobby.max_servers()
+    end
+
+    test "control: a short list is kept whole" do
+      :ok =
+        Lobby.poll(
+          %{basis: silent(), overte: fn -> {:ok, OverteDirectory.parse_places(@places)} end},
+          [@basis]
+        )
+
+      assert length(Lobby.list_servers()) == 2
+    end
+
+    test "a poll writes nothing to the database" do
+      :ok =
+        Lobby.poll(
+          %{
+            basis: fn _, _ -> {:ok, @answer} end,
+            overte: fn -> {:ok, OverteDirectory.parse_places(@places)} end
+          },
+          [@basis]
+        )
+
+      assert %{rows: [[0]]} = Uro.Repo.query!("SELECT count(*) FROM lobby_servers")
+    end
+
+    test "text from other servers is cut to a fixed length" do
+      long = %{
+        platform: "overte",
+        external_id: "d-x",
+        address: "10.0.0.1:1",
+        name: String.duplicate("n", 500),
+        motd: String.duplicate("m", 5000)
+      }
+
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:ok, [long]} end}, [])
+      assert [%{name: name, motd: motd}] = Lobby.list_servers("overte")
+      assert String.length(name) == 128 and String.length(motd) == 512
     end
 
     test "the poll interval is ten minutes" do
@@ -213,18 +275,13 @@ defmodule Uro.LobbyTest do
   end
 
   describe "API" do
+    setup do
+      :ok = Lobby.reset()
+    end
+
     test "the server list is JSON at /api/v1/lobby/servers, with the poll interval" do
-      {:ok, _} =
-        Lobby.upsert_server(%{
-          platform: "basis",
-          external_id: "server1.basisvr.org:4296",
-          address: "server1.basisvr.org:4296",
-          name: "main basis server",
-          motd: "another bright day",
-          online: 1,
-          capacity: 5000,
-          status: "up"
-        })
+      :ok =
+        Lobby.poll(%{basis: fn _, _ -> {:ok, @answer} end, overte: fn -> {:ok, []} end}, [@basis])
 
       conn = get(build_conn(), "/api/v1/lobby/servers")
       assert conn.status == 200
@@ -257,14 +314,14 @@ defmodule Uro.LobbyTest do
     end
 
     test "control: before the first poll there is no due time to count down to" do
-      :ok = Lobby.record_poll(nil)
       conn = get(build_conn(), "/api/v1/lobby/servers")
-      assert %{"polled_at" => nil, "next_poll_at" => nil} = Jason.decode!(conn.resp_body)
+
+      assert %{"polled_at" => nil, "next_poll_at" => nil, "servers" => []} =
+               Jason.decode!(conn.resp_body)
     end
 
     test "a poll records its own time" do
-      :ok = Lobby.record_poll(nil)
-      :ok = Lobby.poll(%{basis: fn _, _ -> {:error, :timeout} end, overte: fn -> {:ok, []} end})
+      :ok = Lobby.poll(%{basis: silent(), overte: fn -> {:ok, []} end}, [])
       assert %DateTime{} = Lobby.last_poll()
     end
 
