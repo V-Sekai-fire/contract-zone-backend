@@ -1,42 +1,36 @@
 # SPDX-License-Identifier: MIT
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.Lobby.Server do
-  @moduledoc "One listed game server: a Basis server or an Overte domain."
-  use Ecto.Schema
-  import Ecto.Changeset
+  @moduledoc "One listed game server: a Basis server or an Overte domain. Held in memory only."
 
-  @primary_key {:id, :binary_id, autogenerate: true}
-  @timestamps_opts [inserted_at: :created_at, type: :utc_datetime]
+  @fields [
+    :platform,
+    :external_id,
+    :address,
+    :name,
+    :motd,
+    :online,
+    :capacity,
+    :client_url,
+    :last_polled_at,
+    :last_seen_at
+  ]
+  defstruct @fields ++ [status: "unknown"]
 
-  @platforms ~w(basis overte)
-  @statuses ~w(unknown up down)
+  @doc "A server from the given fields. Text from other servers is cut to a fixed length."
+  def new(attrs), do: update(%__MODULE__{}, attrs)
 
-  schema "lobby_servers" do
-    field(:platform, :string)
-    field(:external_id, :string)
-    field(:address, :string)
-    field(:name, :string)
-    field(:motd, :string)
-    field(:online, :integer)
-    field(:capacity, :integer)
-    field(:status, :string, default: "unknown")
-    field(:client_url, :string)
-    field(:last_polled_at, :utc_datetime)
-    field(:last_seen_at, :utc_datetime)
-
-    timestamps()
+  def update(server, attrs) do
+    server
+    |> struct(Map.take(attrs, [:status | @fields]))
+    |> cap(:name, 128)
+    |> cap(:motd, 512)
   end
 
-  @fields ~w(platform external_id address name motd online capacity status client_url last_polled_at last_seen_at)a
-
-  def changeset(server, attrs) do
-    server
-    |> cast(attrs, @fields)
-    |> validate_required([:platform, :external_id, :address, :name])
-    |> validate_inclusion(:platform, @platforms)
-    |> validate_inclusion(:status, @statuses)
-    |> validate_length(:name, max: 128)
-    |> validate_length(:motd, max: 512)
-    |> unique_constraint([:platform, :external_id])
+  defp cap(server, key, max) do
+    case Map.fetch!(server, key) do
+      text when is_binary(text) -> Map.put(server, key, String.slice(text, 0, max))
+      _ -> server
+    end
   end
 end

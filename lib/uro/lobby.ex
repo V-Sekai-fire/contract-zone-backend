@@ -2,39 +2,57 @@
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.Lobby do
   @moduledoc """
-  The OMI lobby: a list of open-metaverse game servers (Basis servers and Overte domains)
-  with their health, refreshed by `Uro.Lobby.Poller`.
+  The lobby: Basis servers and Overte domains with their health, refreshed by
+  `Uro.Lobby.Poller`.
 
-  Basis servers are listed rows that the poller probes one by one. Overte domains come
-  from the Overte directory on every poll; a domain the directory stops listing stays as
-  a row and is marked down.
+  The list lives in memory and each poll replaces it whole, capped at `max_servers/0`
+  entries, so it takes constant space and writes nothing to the database. Basis servers
+  are the configured addresses (`:lobby_basis_servers`), probed one by one. Overte domains
+  are whatever the Overte directory lists now; one it stops listing drops off.
   """
-  import Ecto.Query
+  require Logger
   alias Uro.Lobby.{BasisQuery, OverteDirectory, Server}
-  alias Uro.Repo
+
+  @max_servers 10_000
+  @key {__MODULE__, :state}
+  @empty %{servers: [], polled_at: nil}
+
+  def max_servers, do: @max_servers
 
   @doc "Every listed server, up first, then by players online."
-  def list_servers do
-    Server |> order_by(^ordering()) |> Repo.all()
+  def list_servers, do: state().servers
+
+  def list_servers(platform), do: Enum.filter(list_servers(), &(&1.platform == platform))
+
+  @doc "When the last poll ran; nil before the first one."
+  def last_poll, do: state().polled_at
+
+  @doc "Records when the last poll ran, so the page can count down to the next one."
+  def record_poll(at), do: put_state(%{state() | polled_at: at})
+
+  @doc "Replaces the whole list. Sorts it and keeps at most `max_servers/0` entries."
+  def put_servers(servers) do
+    count = length(servers)
+
+    if count > @max_servers do
+      Logger.warning("lobby: #{count} servers listed, keeping the first #{@max_servers}")
+    end
+
+    kept = servers |> Enum.sort_by(&order_key/1) |> Enum.take(@max_servers)
+    put_state(%{state() | servers: kept})
   end
 
-  def list_servers(platform) do
-    Server |> where(platform: ^platform) |> order_by(^ordering()) |> Repo.all()
+  @doc "Empties the list and forgets the last poll."
+  def reset, do: put_state(@empty)
+
+  defp state, do: :persistent_term.get(@key, @empty)
+
+  defp put_state(state) do
+    :persistent_term.put(@key, state)
+    :ok
   end
 
-  defp ordering, do: [desc: dynamic([s], s.status == "up"), desc_nulls_last: :online, asc: :name]
-
-  def get_server!(id), do: Repo.get!(Server, id)
-
-  @doc "Inserts a server, or updates the one with the same platform and external id."
-  def upsert_server(attrs) do
-    platform = attrs[:platform] || attrs["platform"]
-    external_id = attrs[:external_id] || attrs["external_id"]
-
-    (Repo.get_by(Server, platform: platform, external_id: external_id) || %Server{})
-    |> Server.changeset(attrs)
-    |> Repo.insert_or_update()
-  end
+  defp order_key(s), do: {s.status != "up", -(s.online || -1), s.name}
 
   @doc "The probes a real poll uses; tests pass their own."
   def default_probes do
@@ -44,71 +62,64 @@ defmodule Uro.Lobby do
     }
   end
 
-  @doc "Refreshes every server once."
-  def poll(probes \\ default_probes()) do
+  @doc "Refreshes every server once and replaces the list."
+  def poll(probes \\ default_probes(), basis_addresses \\ configured_basis()) do
     now = DateTime.utc_now() |> DateTime.truncate(:second)
-    poll_basis(probes.basis, now)
-    poll_overte(probes.overte, now)
+    previous = Map.new(list_servers(), &{{&1.platform, &1.external_id}, &1})
+
+    basis = Enum.map(basis_addresses, &poll_basis(probes.basis, &1, previous, now))
+    overte = poll_overte(probes.overte, previous, now)
+
+    :ok = put_servers(basis ++ overte)
     record_poll(now)
   end
 
-  @doc "Records when the last poll ran, so the page can count down to the next one."
-  def record_poll(at) do
-    :persistent_term.put({__MODULE__, :last_poll}, at)
-    :ok
-  end
+  defp configured_basis, do: Application.get_env(:uro, :lobby_basis_servers, [])
 
-  @doc "When the last poll ran; nil before the first one."
-  def last_poll, do: :persistent_term.get({__MODULE__, :last_poll}, nil)
+  defp poll_basis(probe, address, previous, now) do
+    last =
+      Map.get(previous, {"basis", address}) ||
+        Server.new(%{
+          platform: "basis",
+          external_id: address,
+          address: address,
+          name: address |> String.split(":") |> hd(),
+          client_url: "https://basisvr.org/"
+        })
 
-  defp poll_basis(probe, now) do
-    Server
-    |> where(platform: "basis")
-    |> Repo.all()
-    |> Enum.each(fn server ->
-      result =
-        case split_address(server.address) do
-          {:ok, host, port} -> probe.(host, port)
-          :error -> {:error, :bad_address}
-        end
+    result =
+      case split_address(address) do
+        {:ok, host, port} -> probe.(host, port)
+        :error -> {:error, :bad_address}
+      end
 
-      attrs =
-        case result do
-          {:ok, info} ->
-            %{
-              status: "up",
-              name: blank_to(info.name, server.name),
-              motd: info.motd,
-              online: info.online,
-              capacity: info.capacity,
-              last_seen_at: now
-            }
-
-          {:error, _} ->
-            %{status: "down"}
-        end
-
-      server |> Server.changeset(Map.put(attrs, :last_polled_at, now)) |> Repo.update!()
-    end)
-  end
-
-  defp poll_overte(fetch, now) do
-    case fetch.() do
-      {:ok, domains} ->
-        seen =
-          for d <- domains do
-            {:ok, _} =
-              upsert_server(Map.merge(d, %{status: "up", last_polled_at: now, last_seen_at: now}))
-
-            d.external_id
-          end
-
-        from(s in Server, where: s.platform == "overte" and s.external_id not in ^seen)
-        |> Repo.update_all(set: [status: "down", last_polled_at: now])
+    case result do
+      {:ok, info} ->
+        Server.update(last, %{
+          status: "up",
+          name: blank_to(info.name, last.name),
+          motd: info.motd,
+          online: info.online,
+          capacity: info.capacity,
+          last_seen_at: now,
+          last_polled_at: now
+        })
 
       {:error, _} ->
-        # The directory itself is unreachable: leave the domains as last seen.
-        :ok
+        Server.update(last, %{status: "down", last_polled_at: now})
+    end
+  end
+
+  defp poll_overte(fetch, previous, now) do
+    case fetch.() do
+      {:ok, domains} ->
+        Enum.map(domains, fn d ->
+          Server.new(Map.merge(d, %{status: "up", last_polled_at: now, last_seen_at: now}))
+        end)
+
+      {:error, _} ->
+        # The directory itself is unreachable: keep the domains as last seen.
+        for {{"overte", _}, server} <- previous, do: server
     end
   end
 
@@ -128,23 +139,4 @@ defmodule Uro.Lobby do
   defp blank_to("", fallback), do: fallback
   defp blank_to(nil, fallback), do: fallback
   defp blank_to(value, _), do: value
-
-  @doc "Lists the Basis servers named in config (`:lobby_basis_servers`) if they are absent."
-  def seed_configured do
-    for address <- Application.get_env(:uro, :lobby_basis_servers, []) do
-      host = address |> String.split(":") |> hd()
-
-      if is_nil(Repo.get_by(Server, platform: "basis", external_id: address)) do
-        upsert_server(%{
-          platform: "basis",
-          external_id: address,
-          address: address,
-          name: host,
-          client_url: "https://basisvr.org/"
-        })
-      end
-    end
-
-    :ok
-  end
 end
