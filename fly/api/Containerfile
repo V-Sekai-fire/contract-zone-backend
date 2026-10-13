@@ -23,9 +23,12 @@ COPY Makefile ./
 COPY c_src ./c_src
 RUN mix compile
 # The web image copies this spec from here at build time.
-RUN mkdir -p frontend/src/__generated && mix run --no-start -e ' \
-  for k <- [:url, :frontend_url, :root_origin], do: Application.put_env(:uro, k, URI.new!("http://localhost")); \
-  Mix.Task.run("openapi.spec.json", ~w(--spec Uro.OpenAPI.Specification --pretty --vendor-extensions=false ./frontend/src/__generated/openapi.json))'
+# runtime.exs demands deploy secrets under prod; these placeholders exist only for this step.
+RUN mkdir -p frontend/src/__generated && \
+    URL=http://localhost ROOT_ORIGIN=http://localhost FRONTEND_URL=http://localhost \
+    URO_WEFTFDB_EXTENSION=/store/build/weftfdb PHOENIX_KEY_BASE=build JOKEN_SIGNER=build \
+    mix openapi.spec.json --spec Uro.OpenAPI.Specification --pretty --vendor-extensions=false --start-app=false \
+      ./frontend/src/__generated/openapi.json
 COPY fly/api/entry.sh /entry.sh
 ENV URO_WEFTFDB_EXTENSION=/store/build/weftfdb \
     WEFT_FDB_CLUSTER_FILE=/etc/foundationdb/fdb.cluster \
