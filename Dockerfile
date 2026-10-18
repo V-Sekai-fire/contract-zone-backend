@@ -47,7 +47,7 @@ RUN mix do compile, phx.digest
 
 # `mix uro.apigen` is deliberately NOT run here. It boots the app
 # (app.start), so config/runtime.exs's :prod branch demands real
-# deploy-time secrets (URL, DATABASE_URL, PHOENIX_KEY_BASE, ...) that
+# deploy-time secrets (URL, URO_WEFTFDB_EXTENSION, PHOENIX_KEY_BASE, ...) that
 # no image build has. Its only output is
 # frontend/src/__generated/openapi.json -- an input to the separate
 # nextjs service's build (frontend/openapi-ts.config.ts), which this

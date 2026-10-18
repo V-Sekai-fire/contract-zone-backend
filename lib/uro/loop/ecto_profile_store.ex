@@ -2,7 +2,7 @@
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.Loop.EctoProfileStore do
   @moduledoc """
-  Ecto/CockroachDB adapter for `UroLoop.Ports.ProfileStore`.
+  Ecto adapter (SQLite on FoundationDB) for `UroLoop.Ports.ProfileStore`.
 
   This is the only module in the zone-backend that imports `Ecto.Query` or
   touches `Uro.Repo` on behalf of the loop cluster. Domain logic and port
