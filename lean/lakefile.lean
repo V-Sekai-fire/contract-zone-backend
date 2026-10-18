@@ -56,40 +56,40 @@ def cassieNativeLinkArgs : Array String :=
 
 -- CASSIE-specific composition layer that imports Cloth.* and exports
 -- the CASSIE-shaped theorem statements + codegen entry-point.
-lean_lib «CassieAvbd» where
+@[default_target] lean_lib «CassieAvbd» where
   roots := #[`CassieAvbd]
 
 -- Surface mesh remeshing/smoothing -- FFI into real PMP, see
 -- CassiePmp/Mesh.lean.
-lean_lib «CassiePmp» where
+@[default_target] lean_lib «CassiePmp» where
   roots := #[`CassiePmp]
 
 -- Constrained Delaunay triangulation -- FFI into real geogram, see
 -- CassieGeogram/Delaunay.lean.
-lean_lib «CassieGeogram» where
+@[default_target] lean_lib «CassieGeogram» where
   roots := #[`CassieGeogram]
 
 -- Wavefront OBJ loader -- FFI, see CassieObj.lean.
-lean_lib «CassieObj» where
+@[default_target] lean_lib «CassieObj» where
   roots := #[`CassieObj]
 
 -- Polylines JSON loader (pure Lean.Data.Json) -- gives cycle_patch a
 -- runtime path (`cycle_patch --input X.json`) so externally-produced
 -- stroke sets don't need codegen + Lean recompile to drive the
 -- forward pipeline.
-lean_lib «CassiePolylinesJson» where
+@[default_target] lean_lib «CassiePolylinesJson» where
   roots := #[`CassiePolylinesJson]
 
 -- DiffCloth's original shader-emit exe -- kept available because its
 -- IO.FS.writeFile + slangc-invocation pattern is the reference the
 -- CASSIE avbd-codegen mirrors.
-lean_exe «emit_shaders» where
+@[default_target] lean_exe «emit_shaders» where
   root := `EmitShaders
 
 -- Emits the AVBD solver kernels (Spmv / Saxpby / CG / Wahba, etc.)
 -- from the composed Lean kernels: Lean source -> LeanSlang.Emit ->
 -- Slang text -> slangc.
-lean_exe «avbd-codegen» where
+@[default_target] lean_exe «avbd-codegen» where
   root := `CassieAvbd.Codegen
   supportInterpreter := true
 
