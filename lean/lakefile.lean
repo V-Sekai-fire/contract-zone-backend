@@ -12,7 +12,11 @@ require «lean-capstone» from git
 -- CassieAvbd's Cg/ubershader codegen and Cloth.SlangCodegen (ported in
 -- alongside modules/cassie/lean/ below).
 require LeanSlang from git
-  "https://github.com/V-Sekai-fire/lean-slang.git" @ "v0.0.6"
+  "https://github.com/V-Sekai-fire/contract-lean-slang.git" @ "60532aef8ed70cc669ecab481182d0636c9e1ac3"
+
+-- The AVBD cloth kernels and their property ladder live in interactor-drape.
+require Cloth from git
+  "https://github.com/V-Sekai-fire/interactor-drape" @ "6d707bb675b5710c545e850cfb3b4b3792a95bd8" / "lean"
 
 -- LockstepDeterminism.lean (RFD 0043's spec) is intentionally NOT a
 -- target of this package -- it has no dependencies of its own and
@@ -49,47 +53,43 @@ def cassieNativeLib : String := "../c_src/thirdparty/build/libcassie_native.a"
 def cassieNativeLinkArgs : Array String :=
   #["-Wl,--start-group", cassieNativeLib, "-Wl,--end-group", "-lstdc++"]
 
--- DiffCloth's proved AVBD kernel library + host-side AVBD data
--- (Cloth.Avbd.{AdjacencySpring, AdjacencyKwise, Coloring}).
-lean_lib «Cloth» where
-  roots := #[`Cloth]
 
 -- CASSIE-specific composition layer that imports Cloth.* and exports
 -- the CASSIE-shaped theorem statements + codegen entry-point.
-lean_lib «CassieAvbd» where
+@[default_target] lean_lib «CassieAvbd» where
   roots := #[`CassieAvbd]
 
 -- Surface mesh remeshing/smoothing -- FFI into real PMP, see
 -- CassiePmp/Mesh.lean.
-lean_lib «CassiePmp» where
+@[default_target] lean_lib «CassiePmp» where
   roots := #[`CassiePmp]
 
 -- Constrained Delaunay triangulation -- FFI into real geogram, see
 -- CassieGeogram/Delaunay.lean.
-lean_lib «CassieGeogram» where
+@[default_target] lean_lib «CassieGeogram» where
   roots := #[`CassieGeogram]
 
 -- Wavefront OBJ loader -- FFI, see CassieObj.lean.
-lean_lib «CassieObj» where
+@[default_target] lean_lib «CassieObj» where
   roots := #[`CassieObj]
 
 -- Polylines JSON loader (pure Lean.Data.Json) -- gives cycle_patch a
 -- runtime path (`cycle_patch --input X.json`) so externally-produced
 -- stroke sets don't need codegen + Lean recompile to drive the
 -- forward pipeline.
-lean_lib «CassiePolylinesJson» where
+@[default_target] lean_lib «CassiePolylinesJson» where
   roots := #[`CassiePolylinesJson]
 
 -- DiffCloth's original shader-emit exe -- kept available because its
 -- IO.FS.writeFile + slangc-invocation pattern is the reference the
 -- CASSIE avbd-codegen mirrors.
-lean_exe «emit_shaders» where
+@[default_target] lean_exe «emit_shaders» where
   root := `EmitShaders
 
 -- Emits the AVBD solver kernels (Spmv / Saxpby / CG / Wahba, etc.)
 -- from the composed Lean kernels: Lean source -> LeanSlang.Emit ->
 -- Slang text -> slangc.
-lean_exe «avbd-codegen» where
+@[default_target] lean_exe «avbd-codegen» where
   root := `CassieAvbd.Codegen
   supportInterpreter := true
 
