@@ -13,10 +13,10 @@
 # config/runtime.exs (not config.exs's old COMPILE_PHASE trick) for every
 # deploy-time secret. Because the binary is fully static, the runtime
 # stage below needs nothing but the binary itself and CA certs for
-# outbound TLS (CockroachDB client certs, S3-compatible storage, OTLP).
+# outbound TLS (S3-compatible storage, OTLP).
 #
 # Migrations run via Uro.Release.migrate/0 (lib/uro/release.ex),
-# `gateway_admin`/Uro.Repo.Migration only, standard Phoenix-release
+# through Uro.Repo, standard Phoenix-release
 # pattern -- `mix ecto.migrate` does not exist inside a compiled release.
 # Elixir 1.17 to match .github/workflows/ci.yml. 1.16 mis-parses
 # `@fixnum_min -(1 <<< 60)` (lib/weft_warp_burrito/program.ex) as a

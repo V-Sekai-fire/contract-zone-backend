@@ -5,59 +5,41 @@ authentication. Deployed on Fly.io as `multiplayer-fabric-uro`.
 
 ## Fly.io deployment
 
-| URL | Notes |
-|-----|-------|
-| `https://multiplayer-fabric-uro.fly.dev` | Fly default hostname |
-| `https://hub.chibifire.com` | Public alias (Cloudflare proxied) |
-| `https://hubaf2f.chibifire.com` | Machine-specific alias (MAC suffix af2f) |
-| `https://bake.chibifire.com` | Baker posts results here (same app) |
+The lobby API deploys from `fly/api/` as the private app `vsekai-lobby-api`
+(`fly deploy --config fly/api/fly.toml --no-public-ips`); `fly/web/` is the
+public web app in front of it.
 
-**App name:** `multiplayer-fabric-uro` — `flyctl` commands use `--app multiplayer-fabric-uro`.
+### Storage
+
+`Uro.Repo` is SQLite with its pages in FoundationDB: datasource-store's
+`weft_fdb` VFS, loaded from `URO_WEFTFDB_EXTENSION` (`lib/uro/repo/weft_fdb.ex`).
+The database is `URO_DATABASE` (`file:<name>?vfs=weft_fdb`). A weft_fdb database
+admits one connection, so the pool size is 1 and migrations run through
+`Uro.Repo` before the endpoint starts. Dev uses a plain SQLite file
+(`config/dev.exs`). CockroachDB is retired.
 
 ### Required Fly secrets
 
 | Secret | Purpose |
 |--------|---------|
-| `DATABASE_URL` | `postgresql://gateway_writer@multiplayer-fabric-crdb.internal:26257/uro?sslmode=verify-full` |
-| `MIGRATION_DATABASE_URL` | `postgresql://gateway_admin@...` (DDL-capable) |
-| `CRDB_CA_CRT` | CA cert content (written to disk by scripts/fly-start.sh) |
-| `CRDB_CLIENT_WRITER_CRT` | gateway_writer client cert |
-| `CRDB_CLIENT_WRITER_KEY` | gateway_writer client key |
-| `CRDB_CLIENT_ADMIN_CRT` | gateway_admin client cert (for migrations) |
-| `CRDB_CLIENT_ADMIN_KEY` | gateway_admin client key |
+| `FDB_CLUSTER_CONTENT` | FoundationDB cluster file, written by `fly/api/entry.sh` |
+| `FDB_TLS_CERT_B64`, `FDB_TLS_KEY_B64`, `FDB_TLS_CA_B64` | FoundationDB client TLS |
 | `PHOENIX_KEY_BASE` | 64-byte secret key base |
 | `JOKEN_SIGNER` | JWT signing key |
 | `SIGNUP_API_KEY` | Client signup API key |
 | `LOOP_API_KEY` | Loop-server profile commit API key (`POST /api/v1/loop/commit`) |
 
-### Database role separation (ReBAC)
-
-- `Uro.Repo.Migration` — connects as **gateway_admin** (DDL privilege: CREATE, ALTER, DROP)
-- `Uro.Repo` — connects as **gateway_writer** (DML only: SELECT, INSERT, UPDATE, DELETE)
-
-Migrations run at startup via `scripts/fly-start.sh` with the admin repo.
-The app serves requests via the writer repo.
-
 ### Startup script
 
-`scripts/fly-start.sh`:
-1. Writes cert content from Fly secrets (`CRDB_CA_CRT` etc.) to `/tmp/crdb_certs/`
-2. Sets `CRDB_CA_CERT`, `CRDB_CLIENT_CERT`, `CRDB_CLIENT_KEY`, `CRDB_ADMIN_CERT`, `CRDB_ADMIN_KEY`
-3. Runs `mix ecto.migrate --repo Uro.Repo.Migration` (as gateway_admin)
-4. Starts `phx.server` (as gateway_writer)
-
-### Deploy
-
-```bash
-gh workflow run deploy.yml --repo V-Sekai-fire/multiplayer-fabric-zone-backend
-```
+`fly/api/entry.sh` writes the cluster file and TLS files, waits until
+`fdbcli` reports the cluster available, runs `mix ecto.migrate`, then starts
+`phx.server`.
 
 ### Known quirks
 
 - `Helpers.get_env/2` uses `@compile_phase?` baked at build time — env vars for
   non-nil defaults must be set as Fly secrets, not inferred from the example values.
 - `socket_options: [:inet6]` is required — Fly `.internal` DNS returns IPv6 only.
-- `prepare: :unnamed` avoids statement-cache exhaustion on single-node CockroachDB.
 
 ---
 
@@ -77,11 +59,10 @@ mix credo --min-priority high      # linting
 mix format --check-formatted       # formatting
 ```
 
-Integration tests require a running stack (`docker compose up -d` in
-`multiplayer-fabric-hosting/`) and these env vars:
+Integration tests require a running stack (`docker compose up -d`) and
+these env vars:
 
 ```sh
-DATABASE_URL=postgresql://root@localhost:26257/vsekai?sslmode=disable
 AWS_S3_BUCKET=uro-uploads
 AWS_S3_ENDPOINT=http://localhost:7070
 AWS_ACCESS_KEY_ID=minioadmin
@@ -198,11 +179,6 @@ Same entity visible to User B → cycle 10 proved. Minimal V-Sekai PoC complete.
 
 ```sh
 docker logs <baker-container-id>
-
-docker exec multiplayer-fabric-hosting-crdb-1 \
-  /cockroach/cockroach sql --insecure \
-  -e "SELECT id, baked_url IS NOT NULL FROM vsekai.shared_files \
-      ORDER BY inserted_at DESC LIMIT 5;"
 
 nc -u -w2 zone-700a.chibifire.com 7443 && echo "UDP open"
 ```

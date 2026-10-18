@@ -51,7 +51,7 @@ defmodule Uro do
   ### ReBAC access control
 
   The authority zone evaluates ReBAC permissions before instancing. `observe`
-  is public; `modify` requires `owner`. Policies are stored in CockroachDB and
+  is public; `modify` requires `owner`. Policies are stored in Uro.Repo and
   evaluated by the zone server C++ module.
 
   ### Headless asset baking

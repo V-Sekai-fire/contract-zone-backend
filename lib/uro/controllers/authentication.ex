@@ -7,7 +7,7 @@ defmodule Uro.AuthenticationController do
   ## Auth model
 
   zone-backend uses **Pow session tokens** only. On successful login, Pow
-  writes a session token to CockroachDB and returns it as a Bearer token.
+  writes a session token to the database and returns it as a Bearer token.
   All subsequent requests carry:
 
   ```

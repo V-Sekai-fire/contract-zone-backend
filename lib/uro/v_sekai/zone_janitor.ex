@@ -2,7 +2,7 @@
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.VSekai.ZoneJanitor do
   @moduledoc """
-  GenServer that culls stale zone records from CockroachDB.
+  GenServer that culls stale zone records from the database.
 
   Zone servers send `PUT /shards/:id` heartbeats every ~25 s. Each PUT sets
   `last_put_at` to the current time. This GenServer wakes periodically and

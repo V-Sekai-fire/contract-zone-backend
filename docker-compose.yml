@@ -1,45 +1,5 @@
 version: "4.0"
 services:
-  # Generate CockroachDB TLS certificates into a shared volume.
-  # Runs as root so it can create files, then chowns to uid 1000 (cockroach).
-  # Certs are issued with a 100-year lifetime (876000h) — effectively no expiry.
-  crdb-certs-init:
-    image: ghcr.io/v-sekai/cockroach:latest
-    platform: linux/amd64
-    user: "0:0"
-    volumes:
-      - crdbcerts:/certs
-    entrypoint: >
-      /bin/sh -c "
-        set -e
-        [ -f /certs/ca.crt ] && exit 0
-        cockroach cert create-ca --certs-dir=/certs --ca-key=/certs/ca.key --allow-ca-key-reuse --lifetime=2190000h
-        cockroach cert create-node localhost database 127.0.0.1 ::1 --certs-dir=/certs --ca-key=/certs/ca.key --lifetime=876000h
-        cockroach cert create-client root --certs-dir=/certs --ca-key=/certs/ca.key --lifetime=876000h
-        chown -R 1000:1000 /certs
-      "
-
-  database:
-    image: ghcr.io/v-sekai/cockroach:latest
-    platform: linux/amd64
-    restart: always
-    shm_size: 128mb
-    command: start-single-node --certs-dir=/certs --listen-addr=:26257 --http-addr=:8080
-    volumes:
-      - "./cockroach:/cockroach/cockroach-data"
-      - crdbcerts:/certs:ro
-    ports:
-      - "26257:26257"
-      - "8082:8080"  # Dashboard (HTTPS)
-    depends_on:
-      crdb-certs-init:
-        condition: service_completed_successfully
-    healthcheck:
-      test: ["CMD", "cockroach", "sql", "--certs-dir=/certs", "-e", "SELECT 1"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-
   redis:
     image: redis:7.4-alpine
     restart: always
@@ -58,24 +18,13 @@ services:
         - "uro:latest"
     restart: always
     links:
-      - database
       - redis
     depends_on:
-      database:
-        condition: service_healthy
-        restart: true
       redis:
         condition: service_healthy
         restart: true
     env_file:
       - .env
-    environment:
-      DATABASE_URL: "postgresql://root@database:26257/vsekai?sslmode=verify-full&sslcert=/certs/client.root.crt&sslkey=/certs/client.root.key&sslrootcert=/certs/ca.crt"
-      CRDB_CA_CERT: "/certs/ca.crt"
-      CRDB_CLIENT_CERT: "/certs/client.root.crt"
-      CRDB_CLIENT_KEY: "/certs/client.root.key"
-    volumes:
-      - crdbcerts:/certs:ro
     healthcheck:
       test: curl --fail http://uro:4000/health || exit 1
       interval: 5s
@@ -120,6 +69,5 @@ networks:
     name: "uro"
 
 volumes:
-  crdbcerts:
   caddy_data:
   caddy_config:

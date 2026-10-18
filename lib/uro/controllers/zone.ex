@@ -126,7 +126,8 @@ defmodule Uro.ZoneController do
           "model" => "ReBAC",
           "observe" => "public — all connected clients receive entity snapshots",
           "modify" => "owner only — only the uploader may instance their own asset",
-          "storage" => "CockroachDB; evaluated by the zone server C++ module"
+          "storage" =>
+            "Uro.Repo (SQLite on FoundationDB); evaluated by the zone server C++ module"
         },
         "packet" => %{
           "total_bytes" => 100,

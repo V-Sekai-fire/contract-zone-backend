@@ -5,7 +5,7 @@ defmodule UroLoop.Ports.ProfileStore do
   Output port for persisting loop player profiles.
 
   Implement this behaviour in an adapter to supply storage. The default
-  adapter is `Uro.Loop.EctoProfileStore` (CockroachDB via Ecto), which
+  adapter is `Uro.Loop.EctoProfileStore` (Ecto, SQLite on FoundationDB), which
   lives in the zone-backend app. Tests can inject an in-memory fake via
   `Application.put_env(:uro, :loop_profile_store, FakeStore)`.
   """
