@@ -12,7 +12,11 @@ require «lean-capstone» from git
 -- CassieAvbd's Cg/ubershader codegen and Cloth.SlangCodegen (ported in
 -- alongside modules/cassie/lean/ below).
 require LeanSlang from git
-  "https://github.com/V-Sekai-fire/lean-slang.git" @ "v0.0.6"
+  "https://github.com/V-Sekai-fire/contract-lean-slang.git" @ "60532aef8ed70cc669ecab481182d0636c9e1ac3"
+
+-- The AVBD cloth kernels and their property ladder live in interactor-drape.
+require Cloth from git
+  "https://github.com/V-Sekai-fire/interactor-drape" @ "6d707bb675b5710c545e850cfb3b4b3792a95bd8" / "lean"
 
 -- LockstepDeterminism.lean (RFD 0043's spec) is intentionally NOT a
 -- target of this package -- it has no dependencies of its own and
@@ -49,10 +53,6 @@ def cassieNativeLib : String := "../c_src/thirdparty/build/libcassie_native.a"
 def cassieNativeLinkArgs : Array String :=
   #["-Wl,--start-group", cassieNativeLib, "-Wl,--end-group", "-lstdc++"]
 
--- DiffCloth's proved AVBD kernel library + host-side AVBD data
--- (Cloth.Avbd.{AdjacencySpring, AdjacencyKwise, Coloring}).
-lean_lib «Cloth» where
-  roots := #[`Cloth]
 
 -- CASSIE-specific composition layer that imports Cloth.* and exports
 -- the CASSIE-shaped theorem statements + codegen entry-point.
