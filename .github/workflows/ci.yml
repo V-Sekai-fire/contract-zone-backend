@@ -28,6 +28,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Elixir
+        id: beam
         uses: erlef/setup-beam@v1
         with:
           elixir-version: "1.17"
@@ -97,8 +98,8 @@ jobs:
         uses: actions/cache@v4
         with:
           path: priv/plts
-          key: ${{ runner.os }}-zone-backend-dialyzer-${{ hashFiles('mix.lock') }}
-          restore-keys: ${{ runner.os }}-zone-backend-dialyzer-
+          key: ${{ runner.os }}-zone-backend-dialyzer-${{ steps.beam.outputs.otp-version }}-${{ hashFiles('mix.lock') }}
+          restore-keys: ${{ runner.os }}-zone-backend-dialyzer-${{ steps.beam.outputs.otp-version }}-
 
       - name: Dialyzer
         run: mix dialyzer
