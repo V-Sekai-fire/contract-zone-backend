@@ -6,7 +6,7 @@ defmodule Uro.Planner.OrderedJson do
   `standalone/tw_value.hpp`'s `TwValue::Dict = tsl::ordered_map<...>` --
   plain `Jason.decode!/1` returns ordinary Elixir maps, whose iteration
   order is unspecified, which silently breaks any domain construct
-  whose *order* is semantically meaningful (RFD 0023's Stage 5A: a
+  whose *order* is semantically meaningful (RFD66606-0023's Stage 5A: a
   `multigoal`'s per-var/per-key binding order determines which binding
   the HTN search tries first). Neither `json_ld` (decodes into RDF
   datasets -- unordered triples, worse than plain JSON here) nor

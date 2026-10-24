@@ -4,7 +4,7 @@ defmodule Uro.LoopCore.LootCore do
   @moduledoc """
   Hand-ported from `v-sekai-multiplayer-fabric/loot`'s Lean core (via
   `c_src/guest/content/loot.scm`'s own translation) into plain, idiomatic
-  Elixir -- not compiled/sandboxed, per the revised RFD 0026/0027: this
+  Elixir -- not compiled/sandboxed, per the revised RFD66606-0026/0027: this
   is fully-trusted, team-authored game logic, not untrusted content, so
   it runs as ordinary Elixir rather than through the RISC-V sandbox.
 

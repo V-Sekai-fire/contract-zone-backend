@@ -1,7 +1,7 @@
 -- SPDX-License-Identifier: MIT
 -- Copyright (c) 2026 K. S. Ernest (iFire) Lee
 --
--- RFD 0043's automatable enforcement of RFD 0042's "ongoing discipline"
+-- RFD66606-0043's automatable enforcement of RFD66606-0042's "ongoing discipline"
 -- requirement: disassemble a RISC-V guest ELF's .text section via this
 -- org's own fire/lean-capstone (a Lean4 Capstone binding, reused rather
 -- than shelling out to riscv-none-elf-objdump) and fail if any fused

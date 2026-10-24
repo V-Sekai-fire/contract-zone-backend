@@ -3,9 +3,9 @@
 defmodule Uro.Planner.Retriever do
   @moduledoc """
   Hand-ported from `standalone/tw_retriever.hpp` into plain Elixir --
-  same reasoning as the other RFD 0026/0028/0029/0030/0032 ports: pure
+  same reasoning as the other RFD66606-0026/0028/0029/0030/0032 ports: pure
   scoring/ranking math, no untrusted content, depends only on
-  `Uro.Planner.HRR` (RFD 0032).
+  `Uro.Planner.HRR` (RFD66606-0032).
 
   The original took candidates as a JSON string because it crossed a
   NIF boundary; here candidates are plain lists of string-keyed maps

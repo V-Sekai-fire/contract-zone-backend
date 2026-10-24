@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 K. S. Ernest (iFire) Lee
 //
-// CBMC equivalence-checking harness (RFD 0041/0042/0043's chosen
+// CBMC equivalence-checking harness (RFD66606-0041/0042/0043's chosen
 // verification step): proves dot_good is bit-for-bit identical to
 // dot_ref for ALL finite double inputs in a bounded range, not just
 // spot-checked test vectors -- bit-pattern comparison via memcmp, not

@@ -4,7 +4,7 @@ defmodule Uro.Ports.Planner do
   @moduledoc """
   Output port for entity/behavior planning.
 
-  Default adapter: `Uro.Planner.ElixirAdapter` (plain Elixir, RFD 0039).
+  Default adapter: `Uro.Planner.ElixirAdapter` (plain Elixir, RFD66606-0039).
   Tests can inject a Mox mock via
   `Application.put_env(:uro, :planner_adapter, Uro.PlannerMock)`.
   """

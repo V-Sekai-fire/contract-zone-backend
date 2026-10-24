@@ -7,7 +7,7 @@ defmodule Uro.Hrr do
   2009's survey of VSA families).
 
   No NIF, no cross-language boundary. A separate phase-based HRR exists
-  as `Uro.Planner.HRR` (RFD 0032, ported from the now-retired
+  as `Uro.Planner.HRR` (RFD66606-0032, ported from the now-retired
   `standalone/tw_hrr.hpp`) for planner fact retrieval -- that module's
   algebra is deliberately not reused here, since this one is bipolar
   MAP-B, a different VSA family for a different purpose (semantic

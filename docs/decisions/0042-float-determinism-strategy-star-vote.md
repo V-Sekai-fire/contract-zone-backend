@@ -9,14 +9,14 @@ labels: sandbox, godot, determinism, lockstep, floating-point
 
 ## Context
 
-RFD 0040's literature search surfaced three float-determinism
+RFD66606-0040's literature search surfaced three float-determinism
 enforcement strategies converged on by blockchain-VM engineering
 practice: ban floating-point entirely (CosmWasm), emulate via
 constrained software softfloat (EOS-VM), or restrict to integer-only
-computation (DTVM's `dWasm`). RFD 0041 recorded these as "a concrete
+computation (DTVM's `dWasm`). RFD66606-0041 recorded these as "a concrete
 menu... rather than a vague 'be careful' instruction" but didn't choose
-between them. This RFD does, using the same STAR-voting method as RFD
-0041 (score round, then an automatic runoff between the top two).
+between them. This RFD does, using the same STAR-voting method as
+RFD66606-0041 (score round, then an automatic runoff between the top two).
 
 **A fourth candidate is added here, found by checking canonical prior
 art in game networking specifically** (the blockchain-VM literature
@@ -38,7 +38,7 @@ option blockchain VMs already rejected."
 
 ## Method
 
-Same as RFD 0041: **STAR** (Score Then Automatic Runoff). Five judges,
+Same as RFD66606-0041: **STAR** (Score Then Automatic Runoff). Five judges,
 each scoring every candidate 0-5; scores sum to select the top
 candidates, and an automatic runoff between them decides the winner by
 pairwise judge preference.
@@ -50,7 +50,7 @@ pairwise judge preference.
    libriscv architecture (not the general cross-platform case).
 2. **API compatibility with the reference godot-sandbox surface** --
    `Variant`, `Vector2/3/4`, `Quaternion`, `Transform2D/3D`, `Basis`
-   (RFD 0040's item 2) are all float-typed in the reference C++ API;
+   (RFD66606-0040's item 2) are all float-typed in the reference C++ API;
    this judge scores how much of that surface survives unchanged.
 3. **Performance** -- runtime cost of the strategy inside the guest.
 4. **Implementation effort** -- one-time engineering cost to adopt.
@@ -87,7 +87,7 @@ Rationale per cell:
   one to two orders of magnitude slower than hardware FPU, a cost that
   compounds every tick in a real-time simulation the way it wouldn't in
   an infrequently-called smart contract. Precedent (4) is real and
-  confirmed (EOS-VM, RFD 0040's literature search).
+  confirmed (EOS-VM, RFD66606-0040's literature search).
 - **Fixed-point/integer-only** is bit-exact by construction (5) and
   typically fast (5 -- often faster than even native hardware float),
   but requires rebuilding the reference API's math surface around a
@@ -147,7 +147,7 @@ Native wins 2-1 (two ties).
 
 Native wins 2-0 (three ties).
 
-**Strict native float wins both possible runoffs.** Unlike RFD 0041's
+**Strict native float wins both possible runoffs.** Unlike RFD66606-0041's
 C/C++-vs-Ada/SPARK result, this one isn't close: native float doesn't
 just win on judge count, it never loses a single judge outright against
 either alternative.
@@ -164,7 +164,7 @@ server, so the cross-platform-native-float non-determinism
 `gafferongames.com` warns about doesn't apply the way it would to
 natively-compiled code running on players' actual, differing CPUs.
 
-This is not a claim that the risk is zero -- RFD 0040's own
+This is not a claim that the risk is zero -- RFD66606-0040's own
 float-instrumentation caution still applies (float instructions can
 enter a guest via macro-expanded dependency code the author never
 wrote; verify by disassembling the actual guest ELF for F-extension

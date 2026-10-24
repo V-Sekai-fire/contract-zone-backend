@@ -56,9 +56,9 @@ defmodule Uro.MixProject do
   # weft_warp_burrito's own former mix.exs -- its CMake+Ninja+RISC-V recipe
   # was only ever GNU Make syntax, no MSVC/nmake port exists for it). The
   # taskweft_nif.cpp/standalone/ native planner+ReBAC NIF this Makefile used
-  # to also build was retired in RFD 0038, once the compiled-Scheme sandbox
-  # adapters (RFD 0022/0023) became the only ReBAC/planner adapters; those
-  # were themselves retired in favor of plain-Elixir ports (RFD 0039), which
+  # to also build was retired in RFD66606-0038, once the compiled-Scheme sandbox
+  # adapters (RFD66606-0022/0023) became the only ReBAC/planner adapters; those
+  # were themselves retired in favor of plain-Elixir ports (RFD66606-0039), which
   # is why c_src/s7 (the in-repo s7 AOT compiler this comment used to
   # mention) no longer exists either.
   defp make_options do

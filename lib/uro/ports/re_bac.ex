@@ -5,7 +5,7 @@ defmodule Uro.Ports.ReBAC do
   Output port for relationship-based access control checks.
 
   Implement this behaviour in an adapter to supply a ReBAC engine. The
-  default adapter is `Uro.ReBAC.ElixirAdapter` (plain Elixir, RFD 0039).
+  default adapter is `Uro.ReBAC.ElixirAdapter` (plain Elixir, RFD66606-0039).
   Tests can inject a Mox mock via
   `Application.put_env(:uro, :rebac_adapter, Uro.ReBACMock)`.
   """

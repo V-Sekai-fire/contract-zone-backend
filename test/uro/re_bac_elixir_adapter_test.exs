@@ -2,12 +2,12 @@
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.ReBAC.ElixirAdapterTest do
   @moduledoc """
-  Regression suite for `Uro.ReBAC.ElixirAdapter` (plain Elixir, RFD
-  0040). These cases originally ran through both
+  Regression suite for `Uro.ReBAC.ElixirAdapter` (plain Elixir,
+  RFD66606-0040). These cases originally ran through both
   `Uro.ReBAC.TaskweftAdapter` (the native `tw_rebac.hpp` NIF) and then
   `Uro.ReBAC.SandboxAdapter` (compiled Scheme in the libriscv guest,
-  RFD 0022), asserting agreement, before both were retired (RFD 0038,
-  RFD 0039) in favor of this direct port. Each case just pins the value
+  RFD66606-0022), asserting agreement, before both were retired (RFD66606-0038,
+  RFD66606-0039) in favor of this direct port. Each case just pins the value
   that comparison already proved correct.
   """
   use ExUnit.Case, async: true

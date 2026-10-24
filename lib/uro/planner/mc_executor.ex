@@ -3,7 +3,7 @@
 defmodule Uro.Planner.MCExecutor do
   @moduledoc """
   Hand-ported from `standalone/tw_mc_executor.hpp` into plain Elixir --
-  same reasoning as `Uro.Planner.Replan` (RFD 0030): domain actions are
+  same reasoning as `Uro.Planner.Replan` (RFD66606-0030): domain actions are
   an injected `%{name => (state, args -> state | nil)}` map (matching
   `Replan`'s own `action_fn` contract) rather than re-deriving domain
   loading, since that's `Uro.Planner.ElixirAdapter`'s job, not this

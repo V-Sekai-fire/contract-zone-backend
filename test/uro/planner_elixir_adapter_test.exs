@@ -2,19 +2,19 @@
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.Planner.ElixirAdapterTest do
   @moduledoc """
-  Regression suite for `Uro.Planner.ElixirAdapter` (plain Elixir, RFD
-  0040 -- the whole HTN search AND domain evaluation, not just a
+  Regression suite for `Uro.Planner.ElixirAdapter` (plain Elixir,
+  RFD66606-0040 -- the whole HTN search AND domain evaluation, not just a
   search-only subset).
 
   These cases originally ran through both `Uro.Planner.TaskweftAdapter`
   (the native `tw_loader.hpp` + `tw_planner.hpp` NIF) and then
   `Uro.Planner.SandboxAdapter` (compiled Scheme in the libriscv guest,
-  RFD 0023), asserting agreement, before both were retired (RFD 0038,
-  RFD 0039) in favor of this direct port. Each case just pins the plan
+  RFD66606-0023), asserting agreement, before both were retired (RFD66606-0038,
+  RFD66606-0039) in favor of this direct port. Each case just pins the plan
   that comparison already proved correct. Every domain uses the CURRENT
   loader schema (variables/actions/methods/todo_list), not the stale
-  `priv/domains/*.jsonld` schema (a separate, pre-existing bug per RFD
-  0023's Context section).
+  `priv/domains/*.jsonld` schema (a separate, pre-existing bug per
+  RFD66606-0023's Context section).
   """
   use ExUnit.Case, async: true
 

@@ -3,7 +3,7 @@
 defmodule Uro.Planner.MCExecutorTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_mc_executor.hpp`
-  (RFD 0034). The RNG is Erlang's `:rand`, not the original's
+  (RFD66606-0034). The RNG is Erlang's `:rand`, not the original's
   `std::mt19937_64` -- these tests pin probability-1.0 (always succeeds,
   since `:rand.uniform_s/1` draws are always < 1.0) and probability-0.0
   (never succeeds, since no draw is < 0.0) edges rather than exact draw

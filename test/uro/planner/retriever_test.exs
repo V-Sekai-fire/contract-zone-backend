@@ -3,7 +3,7 @@
 defmodule Uro.Planner.RetrieverTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_retriever.hpp`
-  (RFD 0033).
+  (RFD66606-0033).
   """
   use ExUnit.Case, async: true
 

@@ -9,7 +9,7 @@ labels: planner, rebac, sandbox, strangler-fig
 
 ## Context
 
-RFD 0023 landed `Uro.Planner.SandboxAdapter` (Stage 5A: HTN search plus
+RFD66606-0023 landed `Uro.Planner.SandboxAdapter` (Stage 5A: HTN search plus
 domain evaluation, compiled Scheme running in the libriscv guest),
 explicitly deferring scan methods (Stage 5B) and ReBAC-based goal
 bindings (Stage 5C) as follow-on work. This RFD's first half closed
@@ -25,12 +25,12 @@ had no way to enumerate a state variable's keys at guest runtime.
 was working, the question of what else needed sandboxing came up
 directly: ReBAC graphs and planner domains are trusted, bundled content
 (bundled `.jsonld` files, application-authored group/relation data),
-never adversarial input -- exactly the same realization RFD 0026 already
+never adversarial input -- exactly the same realization RFD66606-0026 already
 reached for combat/loot/progression. Running the HTN search, its
 expression evaluator, and the ReBAC graph walk through a custom
-Scheme-to-RISC-V AOT compiler (`c_src/s7`, RFD 0019) and a libriscv
+Scheme-to-RISC-V AOT compiler (`c_src/s7`, RFD66606-0019) and a libriscv
 guest was real infrastructure (a hand-rolled lexer/codegen/register-
-allocator/ELF-builder, a tagged-GuestValue host-call ABI, RFD 0018/
+allocator/ELF-builder, a tagged-GuestValue host-call ABI, RFD66606-0018/
 0021) built to contain a threat that doesn't exist for this content.
 
 ## Decision Outcome
@@ -73,7 +73,7 @@ allocator/ELF-builder, a tagged-GuestValue host-call ABI, RFD 0018/
   s7 interpreter plus the `loot.scm`/`combat.scm`/`progression.scm`
   content and their `record-macros.scm`), and `c_src/thirdparty/s7`
   (the vendored upstream s7 interpreter source) are also deleted.
-  These were already dead code: RFD 0026/0027 moved combat/loot/
+  These were already dead code: RFD66606-0026/0027 moved combat/loot/
   progression off the sandbox and onto `Uro.LoopCore.Instance` (plain
   Elixir) in an earlier session, leaving `WeftWarpBurrito.Sandbox`
   with no remaining caller or test. Their continued presence no longer
@@ -81,7 +81,7 @@ allocator/ELF-builder, a tagged-GuestValue host-call ABI, RFD 0018/
   things that made "keep a RISC-V guest toolchain around" worth its
   weight -- were also gone.
 - **`WeftWarpBurrito.Program`** (the generic tagged-GuestValue host-call
-  trampoline actor, RFD 0018) and its NIF half
+  trampoline actor, RFD66606-0018) and its NIF half
   (`c_src/nif/weft_sandbox_nif.cpp`'s `ProgramResource`/
   `program_call_nif`/`program_resume_nif`) are KEPT, trimmed of the
   now-dead `SandboxResource`/`call_capability_nif` code. Nothing calls
@@ -94,7 +94,7 @@ allocator/ELF-builder, a tagged-GuestValue host-call ABI, RFD 0018/
   cross-compiler invocation) is gone entirely -- the `nif` target
   (CMake+Ninja, host `g++`/`llvm-mingw`, no cross-toolchain) is now the
   whole native build. This closes the loop the original s7-compiler
-  motivation (RFD 0019's "fighting the external riscv-none-elf-gcc
+  motivation (RFD66606-0019's "fighting the external riscv-none-elf-gcc
   toolchain") opened: with no guest program left that needs it, the
   cross-compiler dependency itself is gone, not just avoided.
 

@@ -7,7 +7,7 @@
 
 // Minimal, illustrative software double-precision add/multiply --
 // NOT the production-grade Berkeley SoftFloat (BSD-3-Clause, confirmed
-// FOSS, the real-world option RFD 0042 named), which handles the full
+// FOSS, the real-world option RFD66606-0042 named), which handles the full
 // IEEE 754 spec (subnormals, all rounding modes, NaN payload
 // propagation, infinities). This handles only normal, finite,
 // nonzero double operands with round-to-nearest-even, which is all

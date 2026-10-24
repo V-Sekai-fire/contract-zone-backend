@@ -72,7 +72,7 @@ anyway), decomposition-signature dedup, the witness-oracle prefix
 pruning, the wall-clock budget (the guest's own libriscv instruction
 fuel is a structural equivalent DoS guard).
 
-Config-flip, matching RFD 0022's exact mechanism: `Uro.Application`
+Config-flip, matching RFD66606-0022's exact mechanism: `Uro.Application`
 only boots `Uro.Planner.SandboxAdapter.Program` when
 `Application.get_env(:uro, :planner_adapter) == Uro.Planner.SandboxAdapter`.
 

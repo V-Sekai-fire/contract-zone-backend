@@ -3,7 +3,7 @@
 defmodule Uro.Planner.HRRTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_hrr.hpp`
-  (RFD 0032). No golden byte-vector from the Python/C++ originals is
+  (RFD66606-0032). No golden byte-vector from the Python/C++ originals is
   vendored here -- instead these tests verify the HRR algebra's own
   defining properties (deterministic, dimension-correct, phases in
   [0, 2*pi), bind/unbind are inverses, bundle similarity ~= 1/N,

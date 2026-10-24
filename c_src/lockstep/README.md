@@ -1,7 +1,7 @@
-# Lockstep float-determinism proof of concept (RFD 0043)
+# Lockstep float-determinism proof of concept (RFD66606-0043)
 
 Not part of the default build (`mix compile`/`make`) -- this is a
-manually-run verification exercise proving RFD 0041/0042's chosen
+manually-run verification exercise proving RFD66606-0041/0042's chosen
 approach (Lean4 spec -> CBMC equivalence checking -> RISC-V -> libriscv
 execution) actually works, using `Vector3.dot` as the one worked
 example. See `docs/decisions/0043-lockstep-float-determinism-poc.md`
@@ -26,13 +26,13 @@ for the full writeup and findings.
 - `../../lean/LockstepDeterminism.lean` -- the Lean4 spec these C
   implementations are checked against.
 - `fixedpoint.h` -- Q32.32 fixed-point `dot_ref`/`dot_bad`, standing in
-  for RFD 0042's "ban floats entirely" and "fixed-point/integer-only"
+  for RFD66606-0042's "ban floats entirely" and "fixed-point/integer-only"
   candidates (the same underlying mechanism: no float types, replaced
   by scaled integers).
 - `softfloat_mini.h` -- a minimal, illustrative software double-
   precision add/multiply (NOT the production-grade Berkeley SoftFloat,
-  BSD-3-Clause, confirmed FOSS, RFD 0042's real-world option for this
-  strategy), standing in for RFD 0042's "softfloat emulation" candidate.
+  BSD-3-Clause, confirmed FOSS, RFD66606-0042's real-world option for this
+  strategy), standing in for RFD66606-0042's "softfloat emulation" candidate.
 - `validate_softfloat.c` -- sanity-checks `softfloat_mini.h` against
   native hardware double arithmetic (run with `-O0`, see below for why)
   before trusting it for the cross-platform comparison.

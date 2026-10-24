@@ -4,7 +4,7 @@ defmodule Uro.Planner.Explain do
   @moduledoc """
   Hand-ported from `standalone/tw_explain.hpp` into plain Elixir --
   builds an inspectable explanation tree for a solved plan (from a
-  `Uro.Planner.SolTree`, RFD 0029) or a `no_plan` outcome (from a task
+  `Uro.Planner.SolTree`, RFD66606-0029) or a `no_plan` outcome (from a task
   list + domain). No JSON string boundary: returns a plain map, since
   nothing here crosses a language boundary anymore.
 

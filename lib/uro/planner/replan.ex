@@ -4,12 +4,12 @@ defmodule Uro.Planner.Replan do
   @moduledoc """
   Hand-ported from `standalone/tw_replan.hpp` into plain Elixir --
   same reasoning as `Uro.LoopCore`/`Uro.Planner.{Temporal,SolTree}`'s
-  ports (RFD 0026/0028/0029): self-contained orchestration logic, no
+  ports (RFD66606-0026/0028/0029): self-contained orchestration logic, no
   untrusted content.
 
   Unlike those, this module does NOT re-derive the actual HTN search
   (`tw_plan`/`tw_plan_with_tree`) a third time -- `Uro.Planner.
-  ElixirAdapter` (RFD 0039) has its own, plan/1-shaped entry point, and
+  ElixirAdapter` (RFD66606-0039) has its own, plan/1-shaped entry point, and
   `tw_plan_with_tree` (the tree-returning sibling `Replan`/`SolTree`
   actually need) has no plain-Elixir port of its own yet. The planner
   stays an injected dependency (`plan_fn`/`plan_with_tree_fn`),

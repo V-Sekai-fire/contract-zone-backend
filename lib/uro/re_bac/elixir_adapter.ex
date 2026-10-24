@@ -3,12 +3,12 @@
 defmodule Uro.ReBAC.ElixirAdapter do
   @moduledoc """
   Plain-Elixir ReBAC adapter, ported from `c_src/s7/fixtures/rebac.scm`'s
-  `check-base` (RFD 0022, Stage 4), itself ported from
+  `check-base` (RFD66606-0022, Stage 4), itself ported from
   `standalone/tw_rebac.hpp`.
 
-  Supersedes `Uro.ReBAC.SandboxAdapter` (RFD 0039): ReBAC graphs are
+  Supersedes `Uro.ReBAC.SandboxAdapter` (RFD66606-0039): ReBAC graphs are
   trusted, bundled domain content, not adversarial input -- the same
-  reasoning RFD 0026 already applied to loot/combat/progression.
+  reasoning RFD66606-0026 already applied to loot/combat/progression.
   Running a direct-edge/transitive-membership graph walk through a
   custom Scheme-to-RISC-V compiler and a libriscv guest added machinery
   with no matching threat to sandbox against.

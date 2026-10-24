@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 K. S. Ernest (iFire) Lee
 //
-// RFD 0043's other two float-determinism strategies (RFD 0042):
+// RFD66606-0043's other two float-determinism strategies (RFD66606-0042):
 // fixed-point ("ban floats"/"integer-only") and a minimal softfloat.
 // Freestanding-compatible, same convention as vector3.c -- compiles
 // unmodified as a normal host object and as a RISC-V guest ELF.

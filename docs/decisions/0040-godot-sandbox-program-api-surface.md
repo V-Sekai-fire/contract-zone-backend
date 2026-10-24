@@ -37,7 +37,7 @@ The request names four external resources. Each was actually read
    `syscalls.h`/`syscalls_fwd.hpp` (the ecall numbering a guest program
    links against) and `api.cpp`/`api.hpp`/`api_inline.hpp`/`native.cpp`
    (the glue). This is the real, much richer sibling of the tiny
-   tagged-GuestValue ABI `WeftWarpBurrito.Program` speaks (RFD 0018) --
+   tagged-GuestValue ABI `WeftWarpBurrito.Program` speaks (RFD66606-0018) --
    it lets a RISC-V guest program manipulate live Godot scene-tree
    objects, not just fixnums/atoms/lists/maps.
 3. **`taskweft/godotweft`** (private) -- "Taskweft extern taxonomy for
@@ -68,10 +68,10 @@ The request names four external resources. Each was actually read
    the opposite shape: a RISC-V guest program, sandboxed and gas-
    metered, calling back into a *separate* host process (the actual
    game/editor) through a narrow ecall surface. `WeftWarpBurrito.Program`
-   (RFD 0018/0039) is built for the godot-sandbox shape, not the
+   (RFD66606-0018/0039) is built for the godot-sandbox shape, not the
    LibGodot shape.
 
-**Immediately relevant, from this same session**: RFD 0039 just retired
+**Immediately relevant, from this same session**: RFD66606-0039 just retired
 `WeftWarpBurrito.Sandbox` (the fixed-capability
 `:loot_roll`/`:combat_replay`/`:progression_replay` guest, `c_src/guest/`,
 and the vendored `c_src/thirdparty/s7` interpreter it embedded) as dead
@@ -101,7 +101,7 @@ of it. This rules in and rules out several things at once:
   server. Whichever side compiles it, both sides load and run the exact
   same guest program.
 - **This is exactly the shape `WeftWarpBurrito.Program` already
-  provides -- and exactly why RFD 0039 kept it.** A fixed RISC-V ISA
+  provides -- and exactly why RFD66606-0039 kept it.** A fixed RISC-V ISA
   interpreted by libriscv is a single, reproducible execution substrate
   *regardless of the host CPU* running the interpreter. That's the
   whole reason this is more promising than it looks at first glance:
@@ -110,7 +110,7 @@ of it. This rules in and rules out several things at once:
   bit-reproducible, which is precisely the problem lockstep networking
   needs solved. Executing the identical guest ELF through the identical
   interpreter on both ends sidesteps that problem entirely, as long as
-  the *host-call trampoline* (RFD 0018) doesn't reintroduce
+  the *host-call trampoline* (RFD66606-0018) doesn't reintroduce
   non-determinism of its own.
 
 This directly answers Question 2 as well, more strongly than the
@@ -130,11 +130,11 @@ support today** -- confirmed by grep, zero hits for `float`/`Float` in
 either file. Every godot-sandbox API type in item 2
 (`Vector2/3/4`, `Basis`, `Quaternion`, `Transform2D/3D`, `Rect2`, `Plane`)
 is float-based; `Variant` itself carries floats as one of its core
-scalar kinds. RFD 0018's original design notes always described a
+scalar kinds. RFD66606-0018's original design notes always described a
 `Float64` GuestValue variant as part of the plan, but -- confirmed by
 reading the actual retired `c_src/s7/value.h` history and the current
 `program.ex` -- it was never implemented, because neither prior
-consumer (ReBAC graphs, planner domains, both RFD 0039) needed floats.
+consumer (ReBAC graphs, planner domains, both RFD66606-0039) needed floats.
 **This is the actual unresolved design question a follow-on RFD needs
 to own**: not "should GuestValue support floats" (yes, self-evidently,
 for this use case) but "how is float *determinism* itself guaranteed" --
@@ -155,12 +155,12 @@ execute" -- nothing about that contract mandates a source language.
 Item 2's reference API surface happens to be C++ because that's what
 upstream `libriscv/godot-sandbox` guest programs are conventionally
 written in, but this org already retired one purpose-built guest
-language this same session (RFD 0039: the s7-Scheme subset compiler,
+language this same session (RFD66606-0039: the s7-Scheme subset compiler,
 `c_src/s7`), specifically because it was never worth the machinery for
 its actual callers. Picking a guest language for *this* use case is
 worth doing deliberately rather than defaulting to "whatever the
 reference implementation uses" -- **and the criterion is narrower than
-generic memory safety**: this guest program (unlike RFD 0039's retired
+generic memory safety**: this guest program (unlike RFD66606-0039's retired
 ReBAC/planner content) processes input an active adversary controls.
 Even dev-authored, trusted simulation *logic* still needs to survive a
 malicious client crafting inputs specifically to trigger memory-safety
@@ -185,7 +185,7 @@ materially different bar than "pick whatever's convenient":
   explicit and auditable rather than implicit.
 - **Lean4**: matches this org's own existing verification-first
   tooling directly -- `taskweft/godotweft`'s Lean `KnownMethods`
-  taxonomy, `fire/plausible-witness-dag` (below), and RFD 0026's own
+  taxonomy, `fire/plausible-witness-dag` (below), and RFD66606-0026's own
   precedent of Lean-verified reducers for loot/combat/progression, all
   already exist. A formally verified guest program is the strongest
   answer to "safe against active attack" available in principle (a

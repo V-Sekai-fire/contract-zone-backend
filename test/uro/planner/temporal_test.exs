@@ -3,7 +3,7 @@
 defmodule Uro.Planner.TemporalTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_temporal.hpp`
-  (RFD 0028).
+  (RFD66606-0028).
   """
   use ExUnit.Case, async: true
 

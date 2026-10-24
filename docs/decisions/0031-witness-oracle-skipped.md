@@ -9,7 +9,7 @@ labels: taskweft, planner, elixir-port
 
 ## Context
 
-Continuing the `standalone/` retirement (RFD 0026/0028/0029/0030).
+Continuing the `standalone/` retirement (RFD66606-0026/0028/0029/0030).
 `tw_witness_oracle.hpp` implements a PCG64-seeded, QuickCheck-style
 iterative-deepening property search (`Plausible::ForallFin<N>` +
 `PlausibleWitnessDag::resolve`) used by `tw_planner.hpp`'s
@@ -23,7 +23,7 @@ falling back to real search.
 Not ported. This is a pure pruning/performance heuristic, not planner
 semantics: `tw_seek_plan` is correct without it (it only skips
 already-doomed branches sooner), and it's already documented as
-"safe to drop" in the earlier Scheme-sandbox planner port (RFD 0023's
+"safe to drop" in the earlier Scheme-sandbox planner port (RFD66606-0023's
 own scope notes on `planner.scm`) alongside `seen_decompositions`,
 `fail_cache`/`success_cache`, and `method_stats` reordering — all four
 are randomized/memoized speedups over a search that produces identical
@@ -36,7 +36,7 @@ or any other already-ported module — none of them call it.
 
 Good: one less standalone/ file to port, no loss of planning
 correctness. Bad: none identified — every caller of this file already
-runs the not-yet-built plain-Elixir HTN search (RFD 0030's injected
+runs the not-yet-built plain-Elixir HTN search (RFD66606-0030's injected
 `plan_fn`), which itself doesn't need this heuristic to be correct,
 only potentially slower on deeply doomed branches than native code
 would be.

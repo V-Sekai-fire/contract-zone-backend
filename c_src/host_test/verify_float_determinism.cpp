@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 K. S. Ernest (iFire) Lee
 //
-// RFD 0043's actual "run through libriscv, verify bit-identical output"
-// step (RFD 0042's own recommendation): loads a RISC-V64 guest ELF
+// RFD66606-0043's actual "run through libriscv, verify bit-identical output"
+// step (RFD66606-0042's own recommendation): loads a RISC-V64 guest ELF
 // (c_src/lockstep/vector3.c, cross-compiled by riscv-none-elf-gcc --
 // see this repo's docs/decisions/0043-*.md and c_src/lockstep/README.md
 // for the exact build commands) into this project's own vendored
@@ -27,15 +27,15 @@
 //     objdump: the default build fuses into fmadd.d on RISC-V), and
 //     -ffp-contract=off (built into two separate guest/native ELFs,
 //     see the RFD for the exact build matrix) resolves it completely.
-//     This is the input set that actually exercises RFD 0042's stated
+//     This is the input set that actually exercises RFD66606-0042's stated
 //     risk -- run BOTH, don't rely on "cancellation" alone.
 //
 // Not part of the default CMake build (mirrors this project's existing
 // convention for standalone verification tools -- see verify_guest.cpp
-// before its RFD 0039 retirement): build explicitly with
+// before its RFD66606-0039 retirement): build explicitly with
 //   cmake --build build --target verify_float_determinism
 // This deliberately does NOT reintroduce a riscv-none-elf-gcc build
-// dependency into `mix compile`/CI the way RFD 0039 removed -- the
+// dependency into `mix compile`/CI the way RFD66606-0039 removed -- the
 // guest ELF this harness loads is built by hand, once, for this
 // specific verification exercise, not by the app's own build pipeline.
 #include <cstdio>
