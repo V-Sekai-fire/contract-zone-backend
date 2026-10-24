@@ -10,7 +10,7 @@ labels: taskweft, temporal, elixir-port
 ## Context
 
 Continuing the "port taskweft to Elixir, slowly, one piece at a time"
-direction (following RFD 0026/0027's loot-core pivot): `standalone/
+direction (following RFD66606-0026/0027's loot-core pivot): `standalone/
 tw_temporal.hpp` (ISO 8601 duration parsing, a Floyd-Warshall Simple
 Temporal Network consistency check, civil-calendar `Y`/`Mo`
 arithmetic) is reachable from real NIF entry points

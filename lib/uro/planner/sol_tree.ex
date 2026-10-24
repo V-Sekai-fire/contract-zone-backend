@@ -4,7 +4,7 @@ defmodule Uro.Planner.SolTree do
   @moduledoc """
   Hand-ported from `standalone/tw_soltree.hpp` into plain Elixir --
   same reasoning as `Uro.LoopCore`/`Uro.Planner.Temporal`'s ports
-  (RFD 0026/0028): self-contained bookkeeping, not untrusted content.
+  (RFD66606-0026/0028): self-contained bookkeeping, not untrusted content.
 
   Records the HTN method-choice derivation tree (D/T/A/G/M nodes, per
   IPyHOP's `sol_tree`) so incremental replan can backtrack at the exact

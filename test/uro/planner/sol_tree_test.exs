@@ -3,7 +3,7 @@
 defmodule Uro.Planner.SolTreeTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_soltree.hpp`
-  (RFD 0029).
+  (RFD66606-0029).
   """
   use ExUnit.Case, async: true
 

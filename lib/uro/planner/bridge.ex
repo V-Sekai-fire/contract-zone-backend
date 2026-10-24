@@ -3,7 +3,7 @@
 defmodule Uro.Planner.Bridge do
   @moduledoc """
   Hand-ported from `standalone/tw_bridge.hpp` into plain Elixir --
-  same reasoning as the other RFD 0026/0028/0029/0030/0032/0033/0034
+  same reasoning as the other RFD66606-0026/0028/0029/0030/0032/0033/0034
   ports: string-formatting + regex extraction + a trust gate, no
   untrusted content.
 

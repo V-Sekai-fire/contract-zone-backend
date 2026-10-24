@@ -18,12 +18,12 @@ require LeanSlang from git
 require Cloth from git
   "https://github.com/V-Sekai-fire/interactor-drape" @ "6d707bb675b5710c545e850cfb3b4b3792a95bd8" / "lean"
 
--- LockstepDeterminism.lean (RFD 0043's spec) is intentionally NOT a
+-- LockstepDeterminism.lean (RFD66606-0043's spec) is intentionally NOT a
 -- target of this package -- it has no dependencies of its own and
 -- keeps working exactly as documented (`lean --run
 -- lean/LockstepDeterminism.lean`), independent of this lakefile.
 
--- RFD 0043's follow-on: check_no_fma.lean, using this org's own
+-- RFD66606-0043's follow-on: check_no_fma.lean, using this org's own
 -- fire/lean-capstone (a Lean4 Capstone binding) instead of shelling out
 -- to riscv-none-elf-objdump + scripts/check_no_fma.py's regex parsing --
 -- reuses an owned asset and stays in the same Lean4 tooling this

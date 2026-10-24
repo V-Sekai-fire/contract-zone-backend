@@ -3,7 +3,7 @@
 //
 // The BEAM-facing boundary: an erl_nif wrapping one libriscv::Machine
 // per Program resource, running RISC-V ELFs that use the tagged-
-// GuestValue host-call ABI (RFD 0018). Deliberately thin: construct/
+// GuestValue host-call ABI (RFD66606-0018). Deliberately thin: construct/
 // destroy a Machine, run an exported function with a caller-supplied
 // fuel (gas) budget, and trampoline back to Elixir whenever the guest
 // ecalls the host-math syscall for arithmetic Elixir's native
@@ -54,7 +54,7 @@ fine::Atom machineExceptionToAtom(const riscv::MachineException& e) {
 
 } // namespace
 
-// --- Compiled-program resource + host-call trampoline (RFD 0018) ---
+// --- Compiled-program resource + host-call trampoline (RFD66606-0018) ---
 //
 // RISC-V ELFs using the tagged-GuestValue host-call ABI (originally
 // produced by the in-repo s7 AOT compiler, c_src/s7 -- retired, RFD
@@ -63,7 +63,7 @@ fine::Atom machineExceptionToAtom(const riscv::MachineException& e) {
 // content guest program using the same ABI). These programs may ecall
 // the host-math syscall (600) mid-execution when fixnum arithmetic
 // overflows or touches a bignum handle. The handler cannot compute the
-// answer here - the whole point (RFD 0018) is that Elixir's native
+// answer here - the whole point (RFD66606-0018) is that Elixir's native
 // arbitrary-precision integers do the math - so it stops the Machine
 // (state persists in this resource), the NIF returns
 // {:host_call, op, a, b} to the owning GenServer, and

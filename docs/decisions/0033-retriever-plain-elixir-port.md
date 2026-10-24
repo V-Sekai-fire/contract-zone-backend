@@ -9,13 +9,13 @@ labels: taskweft, elixir-port
 
 ## Context
 
-Continuing the `standalone/` retirement (RFD 0026/0028/0029/0030/0032).
+Continuing the `standalone/` retirement (RFD66606-0026/0028/0029/0030/0032).
 `tw_retriever.hpp` implements hybrid keyword/HRR retrieval scoring —
 `score_candidates` (FTS-rank + Jaccard + HRR-similarity blend, weighted
 by trust and temporal decay), `probe_score` (exact algebraic
 content-from-binding extraction), and `reason_score` (AND-semantics
 minimum similarity across multiple entity vectors). It depends only on
-`tw_hrr.hpp` (already ported, RFD 0032) plus a JSON parse/serialize
+`tw_hrr.hpp` (already ported, RFD66606-0032) plus a JSON parse/serialize
 round-trip that existed solely to cross the native NIF boundary.
 
 ## Decision Outcome

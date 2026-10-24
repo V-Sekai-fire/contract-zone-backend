@@ -9,7 +9,7 @@ labels: taskweft, planner, elixir-port
 
 ## Context
 
-Continuing the `standalone/` retirement (RFD 0026/0028/0029/0030/
+Continuing the `standalone/` retirement (RFD66606-0026/0028/0029/0030/
 0032/0033/0034). `tw_bridge.hpp` is plan-memory bridge glue:
 `parse_relation_edges` (regex-extract relation sentences from stored
 facts into a ReBAC graph), `extract_state_entities`/
@@ -25,7 +25,7 @@ plain Elixir data (facts/plan/state/entities as maps/lists/strings, no
 JSON string boundary). `parse_relation_edges/2` does NOT construct a
 `Uro.ReBAC` graph handle itself — `Uro.ReBAC.new_graph/0` returns an
 opaque handle (native NIF resource or sandbox program handle,
-RFD 0018/0022) that this module has no way to introspect or safely
+RFD66606-0018/0022) that this module has no way to introspect or safely
 construct outside the real adapter. It returns plain
 `{subject, relation, object}` triples instead; a caller wanting a real
 graph folds `Uro.ReBAC.add_edge/4` over the result.

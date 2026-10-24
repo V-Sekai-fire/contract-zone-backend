@@ -9,12 +9,12 @@ labels: taskweft, planner, elixir-port
 
 ## Context
 
-Continuing "port taskweft to Elixir" (RFD 0026/0028/0029), now toward
+Continuing "port taskweft to Elixir" (RFD66606-0026/0028/0029), now toward
 fully retiring `standalone/`. `tw_replan.hpp` simulates plan execution,
 blacklists the exact `(action, args)` command that failed at runtime,
 and replans — but its `tw_plan`/`tw_plan_with_tree` calls are the full
 HTN search, which today exists only natively or as compiled Scheme
-(RFD 0023). Re-deriving that search a third time in plain Elixir is
+(RFD66606-0023). Re-deriving that search a third time in plain Elixir is
 separate, larger work, not this module's job.
 
 ## Decision Outcome
@@ -26,7 +26,7 @@ own signatures exactly) rather than re-implementing search. This keeps
 a fake planner — verifying the actual novel content of this module
 (simulate-to-failure, blacklist construction, prefix-splicing, ancestor-
 based method-skip) independent of search correctness, which is already
-covered elsewhere (RFD 0023's own differential tests).
+covered elsewhere (RFD66606-0023's own differential tests).
 
 ## Consequences
 

@@ -9,7 +9,7 @@ labels: taskweft, elixir-port
 
 ## Context
 
-Continuing the `standalone/` retirement (RFD 0026/0028/0029/0030/0031).
+Continuing the `standalone/` retirement (RFD66606-0026/0028/0029/0030/0031).
 `tw_hrr.hpp` implements Holographic Reduced Representations (Plate 1995
 / Gayler 2004): deterministic SHA-256-derived phase vectors for atoms,
 circular-convolution `bind`/`unbind`, circular-mean `bundle`, cosine

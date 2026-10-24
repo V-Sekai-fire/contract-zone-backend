@@ -4,7 +4,7 @@ defmodule Uro.Planner.HRR do
   @moduledoc """
   Hand-ported from `standalone/tw_hrr.hpp` (Holographic Reduced
   Representations, Plate 1995 / Gayler 2004) into plain Elixir --
-  same reasoning as the other RFD 0026/0028/0029/0030 ports: no
+  same reasoning as the other RFD66606-0026/0028/0029/0030 ports: no
   untrusted content, no sandbox needed. Atoms are deterministic
   SHA-256-derived phase vectors, matching the original's Python/C++
   implementations byte-for-byte (same SHA-256, same little-endian

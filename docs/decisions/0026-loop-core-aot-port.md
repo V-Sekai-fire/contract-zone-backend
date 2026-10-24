@@ -9,7 +9,7 @@ labels: loot-loop, loop-core
 
 ## Context
 
-RFD 0020's Confirmation bar: "at least one slice behavior... executes
+RFD66606-0020's Confirmation bar: "at least one slice behavior... executes
 from an s7-compiled/sandboxed script through zone-backend's
 trampoline." Investigation found this nearly already met on the
 *interpreted* side: `c_src/guest/content/{loot,combat,progression}.scm`
@@ -20,16 +20,16 @@ wrappers (`c_src/guest/weft_guest.c`).
 
 This RFD's first draft planned to instead AOT-compile these three
 files through `c_src/s7/` (adding bitwise primitives, `cond`, and named
-`let` to close the feature gap — RFD 0024/0025, both still landed as
+`let` to close the feature gap — RFD66606-0024/0025, both still landed as
 general compiler improvements, useful independent of this decision).
 **That plan was superseded before shipping.** The RISC-V sandbox exists
 for a specific trust boundary — untrusted or externally-influenced
-content (ReBAC graphs, planner domains, RFD 0021/0022/0023) — that
+content (ReBAC graphs, planner domains, RFD66606-0021/0022/0023) — that
 doesn't apply to combat/loot/progression: this is fully-trusted,
 team-authored game logic, already verified upstream in Lean. Running
 it through a RISC-V emulator adds sandbox machinery with no matching
 threat to sandbox against, and slows the edit-iterate loop the RISC-V
-AOT compiler itself was built to speed up (RFD 0019).
+AOT compiler itself was built to speed up (RFD66606-0019).
 
 ## Decision Outcome
 
@@ -44,7 +44,7 @@ trust level as any other module in this app.
 ## Consequences
 
 Good: real gameplay logic runs natively, real per-call parameterization
-(not fixed golden replays) via `Uro.LoopCore.Instance` (RFD 0027);
+(not fixed golden replays) via `Uro.LoopCore.Instance` (RFD66606-0027);
 zero new infrastructure. Bad: this logic is no longer sandboxed —
 correct, since it was never untrusted content, but a future port of
 genuinely external/adversarial game content should NOT default to this

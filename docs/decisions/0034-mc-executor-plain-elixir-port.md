@@ -9,7 +9,7 @@ labels: taskweft, planner, elixir-port
 
 ## Context
 
-Continuing the `standalone/` retirement (RFD 0026/0028/0029/0030/0032/0033).
+Continuing the `standalone/` retirement (RFD66606-0026/0028/0029/0030/0032/0033).
 `tw_mc_executor.hpp` is a Monte Carlo plan executor: it draws one
 uniform(0,1) sample per plan step, compares against that step's
 success probability, applies the domain action if drawn successful,
@@ -20,7 +20,7 @@ doesn't go as planned" simulator, not verified game logic.
 
 `lib/uro/planner/mc_executor.ex` takes domain actions as an injected
 `%{name => (state, args -> state | nil)}` map, exactly matching
-`Uro.Planner.Replan`'s own `action_fn` contract (RFD 0030) — for the
+`Uro.Planner.Replan`'s own `action_fn` contract (RFD66606-0030) — for the
 same reason: domain loading is `Uro.Planner.TaskweftAdapter`/
 `Uro.Planner.SandboxAdapter`'s job, not this module's. State is a
 plain map throughout (no JSON string round-trip, since nothing crosses
@@ -46,7 +46,7 @@ behavior change, not a faithful port).
 
 ## Consequences
 
-Good: reuses the same dependency-injection seam RFD 0030 already
+Good: reuses the same dependency-injection seam RFD66606-0030 already
 established, so the same eventual plain-Elixir planner (should one get
 built) plugs into both modules identically. Bad: not bit-identical to
 the native NIF's random draws — acceptable since Monte Carlo simulation

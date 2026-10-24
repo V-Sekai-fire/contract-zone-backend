@@ -3,7 +3,7 @@
 defmodule Uro.Planner.ExplainTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_explain.hpp`
-  (RFD 0037).
+  (RFD66606-0037).
   """
   use ExUnit.Case, async: true
 

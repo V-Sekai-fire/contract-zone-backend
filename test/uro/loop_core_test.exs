@@ -2,8 +2,8 @@
 # Copyright (c) 2026 K. S. Ernest (iFire) Lee
 defmodule Uro.LoopCoreTest do
   @moduledoc """
-  Golden-vector fidelity (RFD 0026) plus real-parameterization proof
-  (RFD 0027) for the plain-Elixir loot/combat/progression ports.
+  Golden-vector fidelity (RFD66606-0026) plus real-parameterization proof
+  (RFD66606-0027) for the plain-Elixir loot/combat/progression ports.
   """
   use ExUnit.Case, async: true
 

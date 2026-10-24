@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 // Copyright (c) 2026 K. S. Ernest (iFire) Lee
 //
-// Vector3.dot proof-of-concept for RFD 0043 (Lean4 -> CBMC -> RISC-V ->
-// libriscv verification pipeline, RFD 0041/0042's chosen approach).
+// Vector3.dot proof-of-concept for RFD66606-0043 (Lean4 -> CBMC -> RISC-V ->
+// libriscv verification pipeline, RFD66606-0041/0042's chosen approach).
 // Scalar-argument form deliberately, not a Vector3 struct: RISC-V's
 // small-aggregate-passing rules (an all-float struct qualifies for
 // FPR-only passing only up to 2 fields; a 3-field struct like Vector3

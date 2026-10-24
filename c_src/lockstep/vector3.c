@@ -4,7 +4,7 @@
 // See vector3.h. Freestanding-compatible (no libc calls) so this
 // compiles unmodified both as a normal host object (for CBMC and the
 // native side of verify_float_determinism.cpp) and as a RISC-V guest
-// ELF (via riscv-none-elf-gcc -ffreestanding, see RFD 0043's build
+// ELF (via riscv-none-elf-gcc -ffreestanding, see RFD66606-0043's build
 // instructions).
 #include "vector3.h"
 

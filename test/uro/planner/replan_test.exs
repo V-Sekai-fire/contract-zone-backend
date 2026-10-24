@@ -3,7 +3,7 @@
 defmodule Uro.Planner.ReplanTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_replan.hpp`
-  (RFD 0030). The actual planner (`tw_plan`/`tw_plan_with_tree`) is a
+  (RFD66606-0030). The actual planner (`tw_plan`/`tw_plan_with_tree`) is a
   fake here on purpose -- this module's own job is orchestration
   (simulate/blacklist/prefix-splicing), not search, per its moduledoc.
   """

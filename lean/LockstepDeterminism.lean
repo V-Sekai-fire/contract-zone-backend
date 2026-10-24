@@ -1,8 +1,8 @@
 -- SPDX-License-Identifier: MIT
 -- Copyright (c) 2026 K. S. Ernest (iFire) Lee
 --
--- Lean4 spec for RFD 0043's Lean4 -> CBMC -> RISC-V -> libriscv
--- verification pipeline (RFD 0041/0042's chosen approach). Lean4's
+-- Lean4 spec for RFD66606-0043's Lean4 -> CBMC -> RISC-V -> libriscv
+-- verification pipeline (RFD66606-0041/0042's chosen approach). Lean4's
 -- `Float` is IEEE 754 binary64 (Lean4's own core library backs it with
 -- the platform's native `double`), so this spec's evaluation order IS
 -- the semantics an equivalence-checked C implementation must match

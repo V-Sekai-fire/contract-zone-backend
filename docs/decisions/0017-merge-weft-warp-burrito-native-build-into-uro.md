@@ -23,7 +23,7 @@ Moved `WeftWarpBurrito.SandboxNif` into `lib/weft_warp_burrito/sandbox_nif.ex`
 (`:code.priv_dir(:weft_warp_burrito)` → `:code.priv_dir(:uro)`); deleted
 `WeftWarpBurrito.Application` (empty supervisor, unreferenced). Merged
 `c_src/{guest,nif,thirdparty,host_test}` and `CMakeLists.txt` into the root
-`c_src/` (alongside `taskweft_nif.cpp` from RFD 0016). Unified the root
+`c_src/` (alongside `taskweft_nif.cpp` from RFD66606-0016). Unified the root
 `Makefile` to build both native pieces (`all: taskweft_nif guest nif`).
 Dropped the `nmake`/`Makefile.win` branch entirely — `weft_warp_burrito`'s
 CMake+Ninja+RISC-V recipe was only ever GNU Make syntax, and both CI jobs

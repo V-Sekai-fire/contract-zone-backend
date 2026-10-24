@@ -3,7 +3,7 @@
 defmodule Uro.Planner.BridgeTest do
   @moduledoc """
   Verification for the plain-Elixir port of `standalone/tw_bridge.hpp`
-  (RFD 0035).
+  (RFD66606-0035).
   """
   use ExUnit.Case, async: true
 

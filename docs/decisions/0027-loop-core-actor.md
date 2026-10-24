@@ -9,7 +9,7 @@ labels: loot-loop, loop-core, actors
 
 ## Context
 
-RFD 0026's plain-Elixir `LootCore`/`CombatCore`/`ProgressionCore` need a
+RFD66606-0026's plain-Elixir `LootCore`/`CombatCore`/`ProgressionCore` need a
 caller that holds live per-session state. Real-time combat/loot event
 routing belongs to `zone-server` (a separate repo) —
 `lib/uro/channels/zone_channel.ex` is zone metadata/heartbeat only, not
@@ -22,7 +22,7 @@ directly, not a new WebSocket surface.
 per entity), holding that instance's `CombatCore.State` and
 `ProgressionCore.Profile`, exposing `combat_step/2`, `loot_roll/3`,
 `progression_step/2` with real per-call arguments. Since this logic is
-fully-trusted (RFD 0026), "pause"/"resume"/"gas"/"sandbox" reduce to
+fully-trusted (RFD66606-0026), "pause"/"resume"/"gas"/"sandbox" reduce to
 what a GenServer already gives for free: idle between calls is pause,
 the next call is resume, an ordinary call timeout is the gas budget,
 BEAM's per-process isolation is the sandbox. `WeftWarpBurrito.Program`'s

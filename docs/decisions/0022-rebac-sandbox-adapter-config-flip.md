@@ -32,7 +32,7 @@ inversion) — `Taskweft.ReBAC.check_rel` always builds a
 (`priv/rebac.elf`) by the existing `s7fixtures` Makefile target. The
 graph is a host-owned Elixir list of `[subj, obj, rel]` lists — a
 GuestValue handle the guest walks one cons cell at a time via
-car/cdr/null? (RFD 0021), never copied into guest memory. One
+car/cdr/null? (RFD66606-0021), never copied into guest memory. One
 subset-driven design choice: this Lisp-1 has no string literals (the
 reader has no `Str` kind), so the three relation-name constants the
 algorithm itself must recognize (`IS_MEMBER_OF`, `CONTROLS`,
@@ -44,7 +44,7 @@ owns that fixed vocabulary, not the guest.
 `add_edge` are pure Elixir (no guest call — building the edge list
 costs nothing); `check_rel` calls the named
 `Uro.ReBAC.SandboxAdapter.Program` (one `WeftWarpBurrito.Program`
-GenServer, RFD 0018) with `[graph, subj, rel, obj, rel_consts]`.
+GenServer, RFD66606-0018) with `[graph, subj, rel, obj, rel_consts]`.
 
 **Config-flip**: `Uro.Application` only starts
 `Uro.ReBAC.SandboxAdapter.Program` when

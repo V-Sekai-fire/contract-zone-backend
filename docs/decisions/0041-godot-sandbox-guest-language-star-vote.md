@@ -9,13 +9,13 @@ labels: sandbox, godot, determinism, lockstep, language-choice
 
 ## Context
 
-RFD 0040 named the guest-program language as its own open question,
+RFD66606-0040 named the guest-program language as its own open question,
 separate from the ABI/API-surface question, and stated the real
 criterion explicitly: **safety against an active attacker who controls
 the guest program's input**, not "safer by default" in the abstract.
-This RFD picks up that thread specifically, scoring the candidates RFD
-0040 already named (C/C++, Rust, Lean4) against that bar and the other
-axes RFD 0040 raised, using a STAR-voting-style scoring round plus an
+This RFD picks up that thread specifically, scoring the candidates
+RFD66606-0040 already named (C/C++, Rust, Lean4) against that bar and the other
+axes RFD66606-0040 raised, using a STAR-voting-style scoring round plus an
 automatic runoff -- Olympic-style multi-judge scoring (several
 independent criteria, each scored like a judge) feeding a transparent,
 reproducible ranking method, rather than an unranked bullet list or a
@@ -32,11 +32,11 @@ method points to **C/C++ as the execution language** (the highest-
 scoring eligible candidate once Rust/Zig are blocklisted and Lean4 is
 moved to its correct category) -- **though a genuine, flagged judgment
 call remains open between C/C++ and Ada/SPARK** (see "A fifth
-candidate" below), since Ada/SPARK wins on the two axes RFD 0040 named
+candidate" below), since Ada/SPARK wins on the two axes RFD66606-0040 named
 as primary even though it loses the mechanical runoff on judge count.
 Either way, **Lean4 is used as a verification layer on top**,
 most immediately via differential testing against a Lean4-extracted
-oracle -- the same pattern RFD 0026 already used successfully.
+oracle -- the same pattern RFD66606-0026 already used successfully.
 
 **Org policy update, applied after the vote below was run**: Rust and
 Zig are blocklisted for this use case as not mature enough -- a
@@ -61,26 +61,26 @@ preference). Whichever finalist wins more judges' preference wins the
 runoff.
 
 **Judges** (five criteria, each scoring 0-5, grounded directly in what
-RFD 0040 already established -- none invented fresh for this vote):
+RFD66606-0040 already established -- none invented fresh for this vote):
 
-1. **Safety against active attack** -- RFD 0040's stated primary bar:
+1. **Safety against active attack** -- RFD66606-0040's stated primary bar:
    this guest program processes attacker-controlled input, so this
    judge weighs memory/type safety against a crafted-input adversary
    specifically, not general code quality.
 2. **Determinism / float-reproducibility** -- how auditable and
    controllable the language's floating-point semantics are (rounding,
    FMA contraction, implicit promotion), since bit-exact lockstep is
-   RFD 0040's entire driving use case.
+   RFD66606-0040's entire driving use case.
 3. **RISC-V/libriscv toolchain maturity** -- how proven (vs. merely
    plausible) it is that this language can produce a freestanding
    guest ELF libriscv can execute today.
 4. **Fit with existing org tooling/investment** -- `taskweft/godotweft`
-   (Lean `KnownMethods` taxonomy), `fire/plausible-witness-dag`, and RFD
-   0026's Lean-verified reducers are real, already-owned assets; this
+   (Lean `KnownMethods` taxonomy), `fire/plausible-witness-dag`, and
+   RFD66606-0026's Lean-verified reducers are real, already-owned assets; this
    judge scores how directly a candidate builds on them vs. starting
    from zero.
 5. **Translation friction from the reference API surface** -- item 2 of
-   RFD 0040 (`fabric-godot-core`'s `modules/sandbox/program/cpp/api`) is
+   RFD66606-0040 (`fabric-godot-core`'s `modules/sandbox/program/cpp/api`) is
    C++; this judge scores how much rewriting a candidate requires to
    actually call that surface (or a from-scratch equivalent).
 
@@ -105,7 +105,7 @@ judges; it doesn't change the runoff outcome.)
 Rationale per cell, so these numbers are checkable rather than
 asserted:
 
-- **C/C++** scores lowest on safety (1) -- RFD 0040 named this
+- **C/C++** scores lowest on safety (1) -- RFD66606-0040 named this
   explicitly as the weakest candidate against the stated threat model.
   It scores highest on toolchain maturity (5) and translation friction
   (5) for the same reason: it *is* the reference implementation's
@@ -134,10 +134,10 @@ asserted:
   determinism behavior on a freestanding RISC-V target were found
   anywhere in the search -- scored conservatively low (2, 2) rather
   than assumed, and it has zero footprint in this org's tooling (1).
-- **Lean4** scores highest on safety (5 -- RFD 0040 called a formally
+- **Lean4** scores highest on safety (5 -- RFD66606-0040 called a formally
   verified guest program "the strongest answer... in principle") and
   highest on org-tooling fit (5 -- it directly extends
-  `taskweft/godotweft`, `plausible-witness-dag`, and RFD 0026's own
+  `taskweft/godotweft`, `plausible-witness-dag`, and RFD66606-0026's own
   precedent). But its two weakest scores are exactly the ones that
   matter for actually shipping anything: toolchain maturity (1 --
   "never been tried by any resource this RFD references") and
@@ -203,7 +203,7 @@ spike to break it:
   decision, not a default-by-elimination: C/C++ was never actually
   competing against a viable alternative in its own category.
 - **Lean4 is the verification layer on top of that C/C++ implementation**
-  -- exactly RFD 0040's own "formal methods on top of any of the above"
+  -- exactly RFD66606-0040's own "formal methods on top of any of the above"
   option, now concretely resolved to "on top of C/C++" specifically,
   not left as an abstract fourth option.
 - **The real open question this reframing creates**: a Lean4 proof or
@@ -215,11 +215,11 @@ spike to break it:
      oracle** -- Lean4 can compile/extract its own specification to
      executable code that runs host-side (not in the freestanding
      guest) as a reference; the C/C++ guest implementation is tested
-     against its outputs. This is exactly the pattern RFD 0026 already
+     against its outputs. This is exactly the pattern RFD66606-0026 already
      used ("Lean-verified reducers hand-ported line-for-line" from Lean
      sources, checked against golden vectors) -- real, working
      precedent already in this org, not a new technique to invent.
-  2. **`plausible-witness-dag`-style certification** (RFD 0040): search
+  2. **`plausible-witness-dag`-style certification** (RFD66606-0040): search
      for a counterexample where the C/C++ implementation's output
      diverges from the Lean4 spec's, across `Fin`-bounded input spaces.
      Evidence, not proof, same honest caveat as any property-based
@@ -234,8 +234,8 @@ spike to break it:
   4. **Full proof-carrying-code / translation validation** -- prove the
      *compiled* C/C++ binary (not just its source) actually refines the
      Lean4 spec (CompCert/seL4-style rigor). The strongest guarantee,
-     and the most expensive by a wide margin; nothing found in RFD
-     0040's literature search suggests this org has existing tooling for
+     and the most expensive by a wide margin; nothing found in
+     RFD66606-0040's literature search suggests this org has existing tooling for
      this specific kind of proof, so it would be new, substantial
      investment rather than an extension of anything already owned.
 
@@ -321,7 +321,7 @@ a candidate can disagree with *by how much*. Applying this RFD's own
 stated method mechanically, C/C++ remains the decision. But given how
 lopsided Ada/SPARK's wins are on the two judges that matter most for
 this specific use case (an active-attacker threat model and bit-exact
-lockstep determinism -- literally RFD 0040's stated primary criteria),
+lockstep determinism -- literally RFD66606-0040's stated primary criteria),
 **this is flagged as a genuine judgment call for the team, not settled
 by the mechanical rule alone**: a magnitude-weighted view of this same
 data would plausibly favor Ada/SPARK instead.
@@ -349,8 +349,8 @@ What the search *did* confirm, at high confidence from primary sources:
   "single threaded, non-preemptive, and does not support any
   privileged instructions, nor unaligned accesses" and expecting "no
   operating system... running on bare-metal." zkVM proof validity
-  *requires* bit-exact deterministic replay -- the same property RFD
-  0040's lockstep use case needs -- and the guest memory layout is a
+  *requires* bit-exact deterministic replay -- the same property
+  RFD66606-0040's lockstep use case needs -- and the guest memory layout is a
   fixed, embedded-style ~192MB region built with `no_std`, genuinely
   embeddable rather than a full OS process. This is real, shipped,
   production software solving a closely analogous problem, not a paper
@@ -367,7 +367,7 @@ What the search *did* confirm, at high confidence from primary sources:
   entirely (CosmWasm's stated policy: "you cannot use floating-point
   types in smart contracts. Never."), emulate via constrained software
   softfloat (EOS-VM), or restrict to integer-only computation (DTVM's
-  `dWasm` spec). Whichever language RFD 0040/0041 eventually settles
+  `dWasm` spec). Whichever language RFD66606-0040/0041 eventually settles
   on, one of these three concrete strategies -- not "just be careful
   with the compiler flags" -- is what an actual determinism-enforcement
   mechanism should look like.
@@ -424,7 +424,7 @@ property, and three more tools verified here target it directly:
   own README, not assumed. Real usage examples exist for actual
   consensus/BFT protocols (HotStuff, a DAG-based BFT protocol formalized
   in `Erchiusx/veil-dag-rider`), not just toy examples. This is a
-  materially better fit for RFD 0040's lockstep use case than generic
+  materially better fit for RFD66606-0040's lockstep use case than generic
   Lean4 alone: it's purpose-built to prove a transition system can't
   diverge across an unbounded number of nodes, which is exactly the
   property this RFD's guest program needs. One claim not independently
@@ -506,7 +506,7 @@ None of this changes the C/C++-vs-Ada/SPARK decision below -- it's
 recorded as the natural escalation path *if* the lockstep guest program
 ends up needing BFT-grade guarantees (multiple independently-operated
 nodes, not just one authoritative server re-executing one client), which
-RFD 0040's stated use case (server re-executes what the client computed)
+RFD66606-0040's stated use case (server re-executes what the client computed)
 doesn't currently require. Worth having on record before that question
 comes up rather than researching it cold at that point.
 
@@ -518,9 +518,9 @@ correctly categorized as a verification tool rather than an execution-
 language competitor, and Rust/Zig are excluded by standing org policy,
 the eligible execution-language field is C/C++ and Ada/SPARK. C/C++
 wins the mechanical runoff 3-2 (see "A fifth candidate" above) and
-matches RFD 0040's reference API surface directly with zero translation
+matches RFD66606-0040's reference API surface directly with zero translation
 friction. But Ada/SPARK's two wins -- safety against active attack and
-determinism, literally RFD 0040's stated primary criteria -- are by a
+determinism, literally RFD66606-0040's stated primary criteria -- are by a
 much wider margin than C/C++'s three, which this RFD does not consider
 mechanically settled; it's recorded here as the team's call to make
 with that tension stated plainly, not resolved by vote-counting alone.
@@ -556,13 +556,13 @@ Checked directly, since a FOSS constraint applies here:
     written directly in the source as **ACSL** (ANSI/ISO C Specification
     Language) function contracts -- preconditions, postconditions,
     invariants -- checked by weakest-precondition calculus. This is the
-    concrete mechanism that makes "formal methods on top of C/C++" (RFD
-    0040's own phrase) actually executable: the specific properties the
+    concrete mechanism that makes "formal methods on top of C/C++" (
+    RFD66606-0040's own phrase) actually executable: the specific properties the
     Lean4 spec establishes about a godot-sandbox math primitive can be
     re-expressed as ACSL contracts on the C implementation and proved
     directly, rather than only checked indirectly via differential
     testing -- a real middle ground between "test against an oracle"
-    (cheap, RFD 0026's proven pattern) and "full translation-validation
+    (cheap, RFD66606-0026's proven pattern) and "full translation-validation
     proof that the compiled binary refines the spec" (CompCert-grade
     rigor, real new investment). Both plugins verify properties of the
     *source*, not a proof that the compiler preserves them the way
@@ -675,7 +675,7 @@ vote:
    reference side, and write the CBMC (or `hw-cbmc`) equivalence-check
    harness proving the C/C++ implementation matches it -- direct,
    scoped engineering work, not a research spike, and a stronger
-   guarantee than RFD 0026's differential-testing pattern alone (which
+   guarantee than RFD66606-0026's differential-testing pattern alone (which
    remains a reasonable interim step while the equivalence harness is
    being built, not the final target).
 2. Pick one of the three float-determinism enforcement strategies

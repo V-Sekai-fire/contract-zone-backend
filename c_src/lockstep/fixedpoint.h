@@ -8,7 +8,7 @@
 // fractional part. Represents "ban floats entirely" and "fixed-point/
 // integer-only" as the SAME underlying mechanism (both mean: no float
 // types anywhere, replaced by scaled integers) -- one test covers both
-// RFD 0042 candidates.
+// RFD66606-0042 candidates.
 typedef int64_t fixed_t;
 #define FIXED_SHIFT 32
 #define FIXED_ONE ((fixed_t)1 << FIXED_SHIFT)

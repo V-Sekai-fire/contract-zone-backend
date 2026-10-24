@@ -9,7 +9,7 @@ labels: gyre, scope, tombstones, foundationdb, cockroachdb, planner
 
 ## Context
 
-A single working session took The Gyre (RFD 0085) from a 919,261-byte
+A single working session took The Gyre (RFD66606-0085) from a 919,261-byte
 three.js client to a merged, playable web game, and collapsed the
 surrounding architecture to two repos. This records what was decided and
 what was killed, with dates, so none of it is relitigated.
@@ -24,9 +24,9 @@ Every entry was proposed, examined, and closed on 2026-08-07.
 
 | Factor | Why it died | Record |
 | --- | --- | --- |
-| CockroachDB for *zone* state | Raft loses to log-structured MVCC at 88% writes | RFD 0075 |
-| FDB Record Layer | It is Java. RFD 0075 chose raw `libfdb_c` to avoid the JVM | RFD 0075 |
-| Postgres fork inside libriscv | Needs `fork()`, shm, signals, a filesystem | RFD 0095 |
+| CockroachDB for *zone* state | Raft loses to log-structured MVCC at 88% writes | RFD66606-0075 |
+| FDB Record Layer | It is Java. RFD66606-0075 chose raw `libfdb_c` to avoid the JVM | RFD66606-0075 |
+| Postgres fork inside libriscv | Needs `fork()`, shm, signals, a filesystem | RFD66606-0095 |
 | SQLite over `ZONE_KV_*` | A SQL parser over a KV store, to reach state the guest addresses directly | -- |
 | A TUI | "no tui. webfirst." | -- |
 | ttyd | A binary, not a C ABI library. WebSocket, not H3/WT | -- |
@@ -38,17 +38,17 @@ Every entry was proposed, examined, and closed on 2026-08-07.
 | `zone-server-h2o` | **Archived.** No budget to split it out | -- |
 | The Gyre C guest | No host once the above was archived | -- |
 | libriscv guests, picoquic H3/WT, raw `libfdb_c` | All lived in `zone-server-h2o` | -- |
-| **FDB for player state** | Parity at 0.8% load -- see below | RFD 0075 |
+| **FDB for player state** | Parity at 0.8% load -- see below | RFD66606-0075 |
 
 Live after all of that: **zone-backend and zone-client only.**
 Elixir/Phoenix, `Uro.Planner`, CockroachDB, web first.
 
 ## FDB for player state: tombstoned on parity
 
-RFD 0075 chose FDB over CockroachDB on five points. Four are void now that
+RFD66606-0075 chose FDB over CockroachDB on five points. Four are void now that
 `zone-server-h2o` is archived, and the fifth inverts.
 
-| RFD 0075 said | Now |
+| RFD66606-0075 said | Now |
 | --- | --- |
 | "TPC-C is 88% writes... the database is the bottleneck" | Player state is not that workload |
 | "Active Apple development" | True, and irrelevant if unused |
@@ -63,7 +63,7 @@ Measured against the workload we actually have:
 | FoundationDB 7.3, one core | 35,000 writes/sec | 1.43% |
 | CockroachDB 20.2, 140K warehouses | 1.7M tpmC, about 62,963 tx/sec | 0.79% |
 
-At one action per player per 10 seconds, 5,000 CCU (RFD 0082's own target)
+At one action per player per 10 seconds, 5,000 CCU (RFD66606-0082's own target)
 is 500 tx/sec. Both are over-provisioned by two orders of magnitude, so
 throughput does not discriminate between them here.
 

@@ -3,11 +3,11 @@
 defmodule Uro.Planner.Temporal do
   @moduledoc """
   Hand-ported from `standalone/tw_temporal.hpp` into plain Elixir --
-  same reasoning as `Uro.LoopCore`'s port (RFD 0026): this is
+  same reasoning as `Uro.LoopCore`'s port (RFD66606-0026): this is
   fully-trusted, self-contained arithmetic/parsing logic, not the kind
   of untrusted content the RISC-V sandbox exists to contain.
 
-  One real simplification found during porting (see RFD 0028): the
+  One real simplification found during porting (see RFD66606-0028): the
   original's Simple Temporal Network used `double` distances and
   `infinity()` purely as a "no constraint yet" sentinel -- every actual
   constraint fed to it is an integer millisecond duration. Kept in

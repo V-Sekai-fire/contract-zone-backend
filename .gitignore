@@ -68,7 +68,7 @@ c_src/guest/*.o
 /build/
 priv/plts/
 
-# Lake build output (lean/ -- RFD 0043's check_no_fma tool, vendors
+# Lake build output (lean/ -- RFD66606-0043's check_no_fma tool, vendors
 # fire/lean-capstone + a from-source Capstone build via lean/lakefile.lean)
 lean/.lake/
 

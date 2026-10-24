@@ -9,13 +9,13 @@ labels: taskweft, planner, elixir-port
 
 ## Context
 
-Continuing the `standalone/` retirement (RFD 0026/0028/0029/0030/
+Continuing the `standalone/` retirement (RFD66606-0026/0028/0029/0030/
 0032-0036). `tw_explain.hpp` builds an inspectable explanation tree
 for planning outcomes: `tw_solution_tree_value` (for a solved plan,
 from a `TwSolTree`) and `tw_no_plan_explain_json` (for a `no_plan`
 outcome, from a task list + domain). Depends on `tw_domain.hpp`
-(RFD 0036, not ported) and `tw_soltree.hpp` (already ported as
-`Uro.Planner.SolTree`, RFD 0029).
+(RFD66606-0036, not ported) and `tw_soltree.hpp` (already ported as
+`Uro.Planner.SolTree`, RFD66606-0029).
 
 ## Decision Outcome
 
@@ -25,10 +25,10 @@ no language boundary to cross. Tasks are represented as
 `{:call, name, args}` / `{:goal, bindings}` / `{:multi_goal, bindings}`
 tuples (matching `SolTree.Node`'s own kind atoms), and `domain` is
 duck-typed as `%{actions: map_or_set, task_methods: map}` — the same
-pattern `Uro.Planner.Replan.task_methods/1` (RFD 0030) already
+pattern `Uro.Planner.Replan.task_methods/1` (RFD66606-0030) already
 established for "this module doesn't own the domain's real shape."
 
-Unlike `tw_domain.hpp`/`tw_state.hpp` (RFD 0036), this file was worth
+Unlike `tw_domain.hpp`/`tw_state.hpp` (RFD66606-0036), this file was worth
 porting despite depending on a not-yet-ported domain type: its actual
 job (converting an already-Elixir `SolTree` into an inspectable map)
 is small, self-contained, and immediately useful wherever
@@ -39,7 +39,7 @@ trivially answer.
 
 ## Consequences
 
-Good: `Uro.Planner.SolTree` (RFD 0029) now has a matching explain-view
+Good: `Uro.Planner.SolTree` (RFD66606-0029) now has a matching explain-view
 port, so no orphaned "we ported the tree but not the way to look at
 it" gap remains. Bad: none identified — every original branch (root/
 task/action/goal/multigoal node kinds, resolvable/unresolvable/unknown

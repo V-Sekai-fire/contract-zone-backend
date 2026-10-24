@@ -9,18 +9,18 @@ labels: taskweft, planner, rebac, elixir-port
 
 ## Context
 
-RFD 0022 (ReBAC) and RFD 0023 (Planner, Stage 5A) built compiled-Scheme
+RFD66606-0022 (ReBAC) and RFD66606-0023 (Planner, Stage 5A) built compiled-Scheme
 sandbox adapters as config-flippable alternatives to the native
 `taskweft_nif.cpp`/`standalone/` C++ NIF, proven equivalent via
 differential tests before ever touching the production default. Every
 other file in `standalone/` that wasn't itself the native search engine
-has since been ported to plain Elixir (RFD 0026/0028-0037) or
-documented as intentionally not ported (RFD 0031, 0036). What remained
-was the decision point RFD 0022/0023 always deferred: actually flipping
+has since been ported to plain Elixir (RFD66606-0026/0028-0037) or
+documented as intentionally not ported (RFD66606-0031, RFD66606-0036). What remained
+was the decision point RFD66606-0022/0023 always deferred: actually flipping
 the default and deleting the native path.
 
 The planner sandbox is Stage 5A only — it does not support scan
-methods or ReBAC-based goal bindings (RFD 0023's own Stage 5B/5C,
+methods or ReBAC-based goal bindings (RFD66606-0023's own Stage 5B/5C,
 explicitly follow-on work), and raises a clear error rather than
 misbehaving if a domain needs them. This is a real feature gap, not
 just a formality, so this decision was confirmed with the repo owner
@@ -57,8 +57,8 @@ Good: `standalone/`'s ~4,700 lines of native C++ (tagged-union JSON,
 ordered-map state, HTN search, ReBAC graph engine, HRR, retrieval,
 Monte Carlo execution, plan-memory bridge, explain trees) are gone from
 the build, replaced by either a much smaller compiled-Scheme program
-(RFD 0022/0023) or plain, directly-testable Elixir modules
-(RFD 0026-0037) — one fewer C++ toolchain dependency, one fewer NIF
+(RFD66606-0022/0023) or plain, directly-testable Elixir modules
+(RFD66606-0026-0037) — one fewer C++ toolchain dependency, one fewer NIF
 surface to keep memory-safe.
 
 Bad, accepted knowingly: any real domain that needs scan methods or
@@ -68,16 +68,16 @@ working via the native fallback. No current caller in this repo is
 known to need either feature — `Uro.VSekai.EntityPlanner`'s only
 production domains predate this whole port series and already had a
 separate, pre-existing "wrong JSON-LD key schema" bug (documented in
-RFD 0023's own Context section) that made them fail to load even under
+RFD66606-0023's own Context section) that made them fail to load even under
 the native adapter, so this flip does not newly break a working
 production path. If Stage 5B/5C are needed later, `planner.scm`
-(RFD 0023) is where that work lands — there is no native fallback left
+(RFD66606-0023) is where that work lands — there is no native fallback left
 to fall back to.
 
 ## Confirmation
 
 Full `mix test` suite green after the flip (facade default tests,
-sandbox differential/regression suites, every RFD 0026-0037 module's
+sandbox differential/regression suites, every RFD66606-0026-0037 module's
 own test suite, and the broader application test suite that exercises
 `Uro.ReBAC`/`Uro.Planner` through real call sites like
 `Uro.VSekai.can_enter_zone?/2` and `Uro.Helpers.UserContentHelper`'s

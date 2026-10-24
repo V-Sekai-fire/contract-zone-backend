@@ -3,12 +3,12 @@
 defmodule Uro.Planner.ElixirAdapter do
   @moduledoc """
   Plain-Elixir planner adapter, ported from
-  `c_src/s7/fixtures/planner.scm` (RFD 0023, Stage 5A/5B), itself
+  `c_src/s7/fixtures/planner.scm` (RFD66606-0023, Stage 5A/5B), itself
   ported from `standalone/tw_planner.hpp`/`tw_loader.hpp`.
 
-  Supersedes `Uro.Planner.SandboxAdapter` (RFD 0039): planner domains
+  Supersedes `Uro.Planner.SandboxAdapter` (RFD66606-0039): planner domains
   are trusted, bundled content (bundled `.jsonld` files), not
-  adversarial input -- the same reasoning RFD 0026 already applied to
+  adversarial input -- the same reasoning RFD66606-0026 already applied to
   loot/combat/progression. Running the HTN search and its expression
   evaluator through a custom Scheme-to-RISC-V compiler and a libriscv
   guest added a large amount of machinery (a whole AOT compiler,
@@ -77,7 +77,7 @@ defmodule Uro.Planner.ElixirAdapter do
 
     case walk_tasks(state, tasks, @fuel, ctx) do
       # Matches Uro.Planner.TaskweftAdapter's old contract (raises on
-      # no-plan) so callers didn't have to change across the RFD 0038
+      # no-plan) so callers didn't have to change across the RFD66606-0038
       # config-flip.
       false ->
         raise "no_plan"

@@ -3,16 +3,16 @@
 defmodule WeftWarpBurrito.Program do
   @moduledoc """
   One actor per RISC-V program using the tagged-GuestValue host-call
-  ABI (RFD 0018's BEAM half). Currently unused in production -- the two
+  ABI (RFD66606-0018's BEAM half). Currently unused in production -- the two
   callers this existed for, `Uro.ReBAC.SandboxAdapter` and
   `Uro.Planner.SandboxAdapter`, were retired in favor of plain-Elixir
-  ports (RFD 0039) once their domains turned out to be trusted, bundled
+  ports (RFD66606-0039) once their domains turned out to be trusted, bundled
   content rather than the adversarial input a RISC-V sandbox exists to
   contain. Kept as generic infrastructure for a future genuinely-
   untrusted-content guest program (`WeftWarpBurrito.Sandbox` is the
   fixed-capability sibling for that same libriscv::Machine boundary --
   also currently unused, since `Uro.LoopCore.Instance` moved
-  combat/loot/progression off the sandbox entirely, RFD 0026/0027).
+  combat/loot/progression off the sandbox entirely, RFD66606-0026/0027).
 
   Drives the host-call trampoline: when guest fixnum arithmetic
   overflows (or touches a bignum handle), the guest ecalls, the Machine
@@ -45,7 +45,7 @@ defmodule WeftWarpBurrito.Program do
   @default_fuel 100_000_000
 
   # Tagged GuestValue constants -- must match whatever ELF the caller
-  # loads (RFD 0018's fixed tagging scheme: any guest program using this
+  # loads (RFD66606-0018's fixed tagging scheme: any guest program using this
   # ABI encodes values this same way).
   @false_v 0x06
   @true_v 0x0E
@@ -140,7 +140,7 @@ defmodule WeftWarpBurrito.Program do
   defp trampoline({:ok, tagged}, _resource, handles), do: decode(tagged, handles)
   defp trampoline({:error, _} = error, _resource, _handles), do: error
 
-  ## Host math (RFD 0018): Elixir integers ARE the bignums, and Elixir
+  ## Host math (RFD66606-0018): Elixir integers ARE the bignums, and Elixir
   ## terms ARE the host-owned values behind handles.
 
   defp host_math(op, a, b, handles)
