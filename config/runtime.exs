@@ -39,7 +39,11 @@ if config_env() == :prod do
       |> URI.new!(),
     root_origin: root_origin
 
-  config :uro, :weftfdb_extension, System.fetch_env!("URO_WEFTFDB_EXTENSION")
+  # Optional: without it, URO_DATABASE must name a plain SQLite file (no FoundationDB VFS).
+  case System.get_env("URO_WEFTFDB_EXTENSION") do
+    ext when ext in [nil, ""] -> :ok
+    ext -> config :uro, :weftfdb_extension, ext
+  end
 
   # The page a phone opens from the device sign-in QR; on a LAN deploy, the one public host.
   config :uro,
@@ -51,13 +55,21 @@ if config_env() == :prod do
     origin: System.get_env("WEBAUTHN_ORIGIN", URI.to_string(root_origin)),
     rp_id: System.get_env("WEBAUTHN_RP_ID", root_origin.host)
 
-  # One connection: every open of a weft_fdb database takes its fence (datasource-store).
-  config :uro, Uro.Repo,
-    database: System.get_env("URO_DATABASE", "file:uro.v1?vfs=weft_fdb"),
-    pool_size: 1,
-    journal_mode: :memory,
-    locking_mode: :exclusive,
-    migration_lock: false
+  # weft_fdb: one connection, because every open of a weft_fdb database takes its fence
+  # (datasource-store). A plain SQLite file takes a small pool in WAL mode instead.
+  repo_opts =
+    if System.get_env("URO_WEFTFDB_EXTENSION") in [nil, ""] do
+      [pool_size: String.to_integer(System.get_env("POOL_SIZE", "5")), journal_mode: :wal]
+    else
+      [pool_size: 1, journal_mode: :memory, locking_mode: :exclusive]
+    end
+
+  config :uro,
+         Uro.Repo,
+         [
+           database: System.get_env("URO_DATABASE", "file:uro.v1?vfs=weft_fdb"),
+           migration_lock: false
+         ] ++ repo_opts
 
   https_port = String.to_integer(System.get_env("HTTPS_PORT") || "443")
   http_port = String.to_integer(System.get_env("PORT") || "4000")
