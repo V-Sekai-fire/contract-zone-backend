@@ -104,6 +104,21 @@ defmodule Uro.Zones.Tables do
 
   The result is `{:ok, inputs}` only when `check/2` accepts it, so the encoders do not
   raise on it.
+
+  ## Files
+
+  `files/2` names the tables as `mix uro.zone_tables` writes them: `router.table`,
+  `member.table`, and `keys.<slot>.table` for each seated slot. `zone_files/2` gathers a
+  zone and gives its files. It reads the slot table once; if the keys that
+  `Uro.Zones.PairKeys` holds are not those of that table (a member joined or left in
+  between, or the keys were not refreshed) it returns `{:error, :changed}`, and the caller
+  may ask again.
+
+  `fixture/1` is a fixed zone that needs no database and no process: user numbers 7, 9,
+  12 and 30 in slots 0 to 3, everyone may send, everyone sees everyone, every epoch 0, no
+  further range. The key of slots `a < b` is the SHA-256 of the string
+  `uro.zone_tables fixture seed=<seed> pair=<a>,<b>`, so a seed always gives the same
+  files, on any version of Erlang. These keys are public and must protect nothing.
   """
 
   import Bitwise
@@ -144,6 +159,8 @@ defmodule Uro.Zones.Tables do
   @type inputs :: %{slots: slots(), sees: sees(), controls: [control()]}
   @type reason ::
           {:overlap, row(), row()} | {:out_of_range, row()} | {:user_number, term()} | :too_many
+  @type slot_keys :: %{Slots.slot() => PairKeys.key()}
+  @type file :: {String.t(), binary()}
 
   @doc "The user number of a user id. See the moduledoc for how and why."
   @spec user_number(String.t()) :: non_neg_integer()
@@ -341,8 +358,76 @@ defmodule Uro.Zones.Tables do
   """
   @spec inputs(Slots.zone_id(), keyword()) :: {:ok, inputs()} | {:error, reason()}
   def inputs(zone_id, opts \\ []) do
-    zone = to_string(zone_id)
     table = Slots.table(zone_id, Keyword.get(opts, :slots, Slots))
+    gather(table, to_string(zone_id), Keyword.get(opts, :ranges, []))
+  end
+
+  @doc """
+  The files of the tables, in the order router, member, then keys by slot. `keys` maps
+  each seated slot to the keys of that slot's pairs.
+  """
+  @spec files(inputs(), %{Slots.slot() => slot_keys()}) :: [file()]
+  def files(%{slots: slots, sees: sees, controls: controls}, keys) do
+    seated = for {seat, slot} <- Enum.with_index(slots), seat != nil, do: slot
+
+    [{"router.table", router_table(slots, sees)}, {"member.table", member_table(slots, controls)}] ++
+      for(slot <- seated, do: {"keys.#{slot}.table", keys_table(Map.fetch!(keys, slot))})
+  end
+
+  @doc """
+  Gathers `zone_id` and gives its files. The options are those of `inputs/2`, and `:keys`
+  for the `Uro.Zones.PairKeys` server (that module by default).
+  """
+  @spec zone_files(Slots.zone_id(), keyword()) ::
+          {:ok, [file()]} | {:error, reason() | :changed}
+  def zone_files(zone_id, opts \\ []) do
+    table = Slots.table(zone_id, Keyword.get(opts, :slots, Slots))
+    seated = for {user, slot} <- Enum.with_index(table), user != nil, do: {slot, user}
+    server = Keyword.get(opts, :keys, PairKeys)
+
+    with {:ok, inputs} <- gather(table, to_string(zone_id), Keyword.get(opts, :ranges, [])) do
+      keys =
+        Map.new(seated, fn {slot, user} -> {slot, PairKeys.keys_for(zone_id, user, server)} end)
+
+      slots = Enum.map(seated, &elem(&1, 0))
+
+      if Enum.all?(keys, fn {slot, held} -> Map.keys(held) == slots -- [slot] end),
+        do: {:ok, files(inputs, keys)},
+        else: {:error, :changed}
+    end
+  end
+
+  @doc "The fixed zone of `mix uro.zone_tables --fixture`: its inputs and its keys by slot."
+  @spec fixture(integer()) :: {inputs(), %{Slots.slot() => slot_keys()}}
+  def fixture(seed \\ 1) when is_integer(seed) do
+    slots =
+      for number <- [7, 9, 12, 30] do
+        %{user: "fixture-user-#{number}", number: number, send: true, epoch: 0}
+      end
+
+    users = Enum.map(slots, & &1.user)
+
+    sees =
+      for viewer <- users,
+          sender <- users,
+          viewer != sender,
+          into: MapSet.new(),
+          do: {viewer, sender}
+
+    keys =
+      for slot <- 0..3, into: %{} do
+        {slot,
+         for(other <- 0..3, other != slot, into: %{}, do: {other, fixture_key(seed, slot, other)})}
+      end
+
+    {%{slots: slots, sees: sees, controls: []}, keys}
+  end
+
+  defp fixture_key(seed, a, b) when is_integer(a) and is_integer(b) do
+    :crypto.hash(:sha256, "uro.zone_tables fixture seed=#{seed} pair=#{min(a, b)},#{max(a, b)}")
+  end
+
+  defp gather(table, zone, ranges) do
     users = for user <- table, user != nil, do: to_string(user)
 
     slots =
@@ -368,7 +453,7 @@ defmodule Uro.Zones.Tables do
           do: {viewer, sender}
 
     controls =
-      for {object, first, last} <- Keyword.get(opts, :ranges, []) do
+      for {object, first, last} <- ranges do
         holders = for t <- Tuples.list_for_object(object), t.verb == "CONTROLS", do: t.subject
         controller = Enum.find(holders, List.first(holders), &(&1 in users))
         %{first_gid: first, last_gid: last, controller: controller, epoch: Tuples.epoch(object)}
