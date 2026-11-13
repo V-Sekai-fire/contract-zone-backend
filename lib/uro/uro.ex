@@ -42,11 +42,11 @@ defmodule Uro do
 
   ### Zone authority and interest management
 
-  The zone whose Hilbert curve range contains `hilbert3D(pos)` is authoritative
+  The zone whose Morton code range contains `morton3D(pos)` is authoritative
   for any entity at that position. Only the authority zone executes
   `CMD_INSTANCE_ASSET`. Neighbouring zones within `AOI_CELLS` receive a
-  `CH_INTEREST` ghost without re-fetching. All Hilbert curve and BVH invariants
-  are formally proved in `multiplayer-fabric-predictive-bvh`.
+  `CH_INTEREST` ghost without re-fetching. The Morton code and the BVH invariants
+  are proved in `contract-spatial-oracle`.
 
   ### ReBAC access control
 
