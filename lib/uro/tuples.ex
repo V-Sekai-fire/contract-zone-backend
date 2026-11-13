@@ -45,7 +45,7 @@ defmodule Uro.Tuples do
              on_conflict: :nothing,
              conflict_target: [:subject, :verb, :object]
            ) do
-      {:ok, Repo.one!(where(Tuple, ^Keyword.new(changeset.changes)))}
+      {:ok, Repo.one!(one(subject, verb, object))}
     end
   end
 
