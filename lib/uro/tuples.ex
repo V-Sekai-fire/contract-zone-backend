@@ -11,6 +11,17 @@ defmodule Uro.Tuples do
   names `Uro.Ports.ReBAC` uses.
 
   An empty subject, verb or object is refused with `{:error, changeset}`.
+
+  ## Epochs
+
+  Each row has an epoch, 0 when the tuple is put. `replace/3` is how control of an object
+  changes hands: it removes every tuple with the given verb and object, stores the new
+  subject's tuple, and gives that row an epoch one higher than the object had, all in one
+  transaction. `epoch/1` is the highest epoch among the object's rows, or 0 when it has
+  none, so it goes up by exactly one with each replace. A reader that holds a tuple and
+  its epoch can tell that it is stale when the object's epoch is higher.
+
+  The epoch lives on the rows, so an object with no row left is back at 0.
   """
 
   import Ecto.Query
@@ -52,6 +63,34 @@ defmodule Uro.Tuples do
   @spec list_for_object(String.t()) :: [Tuple.t()]
   def list_for_object(object) do
     Repo.all(from t in Tuple, where: t.object == ^object, order_by: [t.verb, t.subject])
+  end
+
+  @doc """
+  Hands `object` to `new_subject` for `verb`: afterwards `new_subject` is the only subject
+  with that verb on the object, and the object's epoch is one higher. Tuples of the object
+  with other verbs stay. A refused tuple changes nothing.
+  """
+  @spec replace(verb(), String.t(), String.t()) ::
+          {:ok, Tuple.t()} | {:error, Ecto.Changeset.t()}
+  def replace(verb, object, new_subject) do
+    verb = verb_string(verb)
+    attrs = %{subject: new_subject, verb: verb, object: object}
+
+    Repo.transaction(fn ->
+      changeset = Tuple.changeset(%Tuple{}, Map.put(attrs, :epoch, epoch(object) + 1))
+      Repo.delete_all(from t in Tuple, where: t.verb == ^verb and t.object == ^object)
+
+      case Repo.insert(changeset) do
+        {:ok, tuple} -> tuple
+        {:error, changeset} -> Repo.rollback(changeset)
+      end
+    end)
+  end
+
+  @doc "The highest epoch among the tuples of `object`, or 0 when it has none."
+  @spec epoch(String.t()) :: non_neg_integer()
+  def epoch(object) do
+    Repo.one(from t in Tuple, where: t.object == ^object, select: max(t.epoch)) || 0
   end
 
   defp one(subject, verb, object) do

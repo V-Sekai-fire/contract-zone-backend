@@ -80,4 +80,50 @@ defmodule Uro.TuplesTest do
     assert Enum.sort(listed) == [{"alice", "CONTROLS", "ball-7"}, {"bob", "SEES", "ball-7"}]
     assert Tuples.list_for_object("ball-9") == []
   end
+
+  describe "replace/3 and epoch/1" do
+    test "an object with no tuple has epoch 0, and a put does not raise it" do
+      assert Tuples.epoch("ball-7") == 0
+      {:ok, _} = Tuples.put("alice", "CONTROLS", "ball-7")
+      assert Tuples.epoch("ball-7") == 0
+    end
+
+    test "replace moves control to the new subject and raises the epoch by exactly one" do
+      {:ok, _} = Tuples.put("alice", "CONTROLS", "ball-7")
+
+      assert {:ok, %Tuple{subject: "bob", verb: "CONTROLS", object: "ball-7", epoch: 1}} =
+               Tuples.replace("CONTROLS", "ball-7", "bob")
+
+      refute Tuples.has?("alice", "CONTROLS", "ball-7")
+      assert Tuples.has?("bob", "CONTROLS", "ball-7")
+      assert Tuples.epoch("ball-7") == 1
+
+      for {subject, epoch} <- [{"carol", 2}, {"alice", 3}, {"alice", 4}] do
+        assert {:ok, %Tuple{epoch: ^epoch}} = Tuples.replace("CONTROLS", "ball-7", subject)
+        assert Tuples.epoch("ball-7") == epoch
+        assert [%Tuple{subject: ^subject}] = Tuples.list_for_object("ball-7")
+      end
+    end
+
+    test "replace removes every holder of the verb and touches no other verb or object" do
+      for subject <- ~w(alice carol), do: {:ok, _} = Tuples.put(subject, "CONTROLS", "ball-7")
+      {:ok, _} = Tuples.put("alice", "SEES", "ball-7")
+      {:ok, _} = Tuples.put("alice", "CONTROLS", "ball-8")
+
+      {:ok, _} = Tuples.replace("CONTROLS", "ball-7", "bob")
+
+      listed = for t <- Tuples.list_for_object("ball-7"), do: {t.subject, t.verb, t.epoch}
+      assert Enum.sort(listed) == [{"alice", "SEES", 0}, {"bob", "CONTROLS", 1}]
+      assert Tuples.has?("alice", "CONTROLS", "ball-8")
+      assert Tuples.epoch("ball-8") == 0
+    end
+
+    test "control: a replace with an empty subject is refused and changes nothing" do
+      {:ok, _} = Tuples.put("alice", "CONTROLS", "ball-7")
+
+      assert {:error, %Ecto.Changeset{valid?: false}} = Tuples.replace("CONTROLS", "ball-7", "")
+      assert Tuples.has?("alice", "CONTROLS", "ball-7")
+      assert Tuples.epoch("ball-7") == 0
+    end
+  end
 end
