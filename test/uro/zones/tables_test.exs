@@ -98,6 +98,152 @@ defmodule Uro.Zones.TablesTest do
     end
   end
 
+  describe "user_number/1, avatar_object/1 and body_range/1" do
+    test "the number of a user is the first four bytes of the SHA-256 of its id, reduced" do
+      assert Tables.user_number("544ac5ad-1f6c-4a15-9375-3e1bd66045e1") == 112_914_882
+      assert Tables.user_number("u1") == 79_454_643
+      assert Tables.avatar_object("u1") == "avatar:u1"
+    end
+
+    test "the body of a user number is 21 entity ids from 2_000_000 + 21 * number" do
+      assert Tables.body_range(0) == {2_000_000, 2_000_020}
+      assert Tables.body_range(7) == {2_000_147, 2_000_167}
+      assert Tables.body_range(8) == {2_000_168, 2_000_188}
+    end
+
+    test "the highest user number keeps the body below 2^32, and the next does not" do
+      max = Tables.max_user_number()
+      assert max * 21 + 2_000_000 + 20 < 4_294_967_296
+      assert (max + 1) * 21 + 2_000_000 + 20 >= 4_294_967_296
+
+      seed = :rand.uniform(4_294_967_296)
+
+      Enum.reduce(1..@runs, :rand.seed_s(:exsss, seed), fn _, state ->
+        {bytes, state} = :rand.bytes_s(16, state)
+        id = Base.encode16(bytes, case: :lower)
+        number = Tables.user_number(id)
+
+        assert number in 0..max, "the number of #{id} is #{number} (seed #{seed})"
+        assert Tables.user_number(id) == number
+        state
+      end)
+    end
+  end
+
+  describe "member_table/2" do
+    test "a zone of two with one further range, byte by byte" do
+      slots = [seat("a", 7, epoch: 3), nil, seat("b", 9), nil]
+
+      controls = [
+        %{first_gid: 100, last_gid: 199, controller: "b", epoch: 258},
+        %{first_gid: 4_000_000, last_gid: 4_000_000, controller: "gone", epoch: 1}
+      ]
+
+      assert Tables.member_table(slots, controls) ==
+               <<4, 0>> <>
+                 <<100::32-little, 199::32-little, 2, 2, 1, 0, 0>> <>
+                 <<2_000_147::32-little, 2_000_167::32-little, 0, 3, 0, 0, 0>> <>
+                 <<2_000_189::32-little, 2_000_209::32-little, 2, 0, 0, 0, 0>> <>
+                 <<4_000_000::32-little, 4_000_000::32-little, 255, 1, 0, 0, 0>>
+    end
+
+    test "is 2 + 13 * rows bytes, sorted, and decodes to the model" do
+      seed = :rand.uniform(4_294_967_296)
+
+      {_state, {seated, absent}} =
+        Enum.reduce(1..@runs, {:rand.seed_s(:exsss, seed), {0, 0}}, fn run, {state, {n, a}} ->
+          {slots, state} = gen_slots(state)
+          {controls, state} = gen_controls(state)
+          context = "seed #{seed}, run #{run}, slots #{inspect(slots)}, #{inspect(controls)}"
+
+          table = Tables.member_table(slots, controls)
+          model = member_model(slots, controls)
+
+          assert byte_size(table) == 2 + 13 * length(model), "the size is wrong (#{context})"
+          assert Tables.decode_member_table(table) == {:ok, model}, "not the model (#{context})"
+
+          further = Enum.reject(model, &(&1.first_gid >= 2_000_000))
+          gone = Enum.count(further, &(&1.slot == 255))
+          {state, {n + length(further) - gone, a + gone}}
+        end)
+
+      assert seated > 0, "no further range had a seated controller (seed #{seed})"
+      assert absent > 0, "no further range had a controller who is not seated (seed #{seed})"
+    end
+
+    test "an empty zone has no row" do
+      assert Tables.member_table([nil, nil, nil, nil], []) == <<0, 0>>
+      assert Tables.decode_member_table(<<0, 0>>) == {:ok, []}
+    end
+
+    test "control: a slot planted wrong in one row is not the table the inputs give" do
+      slots = [seat("a", 7), seat("b", 9), nil, nil]
+      controls = [%{first_gid: 100, last_gid: 199, controller: "b", epoch: 4}]
+      table = Tables.member_table(slots, controls)
+      {:ok, rows} = Tables.decode_member_table(table)
+
+      for row <- 0..2, planted <- [0, 1, 2, 3, 255] do
+        changed = put_byte(table, 2 + 13 * row + 8, planted)
+
+        if changed == table do
+          assert Enum.at(rows, row).slot == planted
+        else
+          assert {:ok, other} = Tables.decode_member_table(changed)
+          assert other != rows
+          assert List.delete_at(other, row) == List.delete_at(rows, row)
+          assert Enum.at(other, row) == %{Enum.at(rows, row) | slot: planted}
+        end
+      end
+    end
+
+    test "control: ranges that overlap and values that do not fit are refused" do
+      slots = [seat("a", 7), nil, nil, nil]
+      range = fn first, last -> %{first_gid: first, last_gid: last, controller: "a", epoch: 0} end
+
+      for controls <- [
+            [range.(100, 199), range.(199, 300)],
+            [range.(2_000_167, 2_000_168)],
+            [range.(5, 4)],
+            [range.(0, 4_294_967_296)],
+            [range.(-1, 4)],
+            [%{range.(1, 2) | epoch: 4_294_967_296}]
+          ] do
+        assert_raise ArgumentError, fn -> Tables.member_table(slots, controls) end
+      end
+
+      for number <- [-1, Tables.max_user_number() + 1] do
+        assert_raise ArgumentError, fn ->
+          Tables.member_table([seat("a", number), nil, nil, nil], [])
+        end
+      end
+
+      same = [seat("a", 7), seat("b", 7), nil, nil]
+      assert_raise ArgumentError, fn -> Tables.member_table(same, []) end
+    end
+
+    test "control: the decoder refuses a table that is cut, padded, unsorted or malformed" do
+      row = fn first, last, slot -> <<first::32-little, last::32-little, slot, 0::32>> end
+      good = <<2, 0>> <> row.(1, 5, 0) <> row.(6, 9, 255)
+      assert {:ok, [_, _]} = Tables.decode_member_table(good)
+
+      for bad <- [
+            <<>>,
+            <<0>>,
+            binary_part(good, 0, byte_size(good) - 1),
+            good <> <<0>>,
+            <<3, 0>> <> binary_part(good, 2, 26),
+            <<1, 0>> <> binary_part(good, 2, 26),
+            <<2, 0>> <> row.(6, 9, 0) <> row.(1, 5, 0),
+            <<2, 0>> <> row.(1, 6, 0) <> row.(6, 9, 0),
+            <<1, 0>> <> row.(5, 4, 0),
+            <<1, 0>> <> row.(1, 5, 4),
+            <<1, 0>> <> row.(1, 5, 254)
+          ] do
+        assert Tables.decode_member_table(bad) == {:error, :malformed}, inspect(bad)
+      end
+    end
+  end
+
   defp seat(user, number, opts \\ []) do
     %{
       user: user,
@@ -160,5 +306,42 @@ defmodule Uro.Zones.TablesTest do
           do: {row, column}
 
     %{send: Enum.map(slots, &(&1 != nil and &1.send)), sees: pairs}
+  end
+
+  defp gen_controls(state) do
+    {blocks, state} = shuffle(Enum.to_list(0..39), state)
+    {count, state} = :rand.uniform_s(6, state)
+
+    blocks
+    |> Enum.take(count - 1)
+    |> Enum.map_reduce(state, fn block, state ->
+      {length, state} = :rand.uniform_s(100, state)
+      {who, state} = :rand.uniform_s(length(@pool) + 1, state)
+      {epoch, state} = :rand.uniform_s(4_294_967_296, state)
+      first = if rem(block, 2) == 0, do: block * 100, else: 4_294_967_196 - block * 100
+
+      {%{
+         first_gid: first,
+         last_gid: first + length - 1,
+         controller: Enum.at(@pool, who - 1),
+         epoch: epoch - 1
+       }, state}
+    end)
+  end
+
+  defp member_model(slots, controls) do
+    bodies =
+      for {seat, slot} <- Enum.with_index(slots), seat != nil do
+        first = 2_000_000 + seat.number * 21
+        %{first_gid: first, last_gid: first + 20, slot: slot, epoch: seat.epoch}
+      end
+
+    further =
+      for c <- controls do
+        slot = c.controller && slot_of(slots, c.controller)
+        %{first_gid: c.first_gid, last_gid: c.last_gid, slot: slot || 255, epoch: c.epoch}
+      end
+
+    Enum.sort_by(bodies ++ further, & &1.first_gid)
   end
 end
