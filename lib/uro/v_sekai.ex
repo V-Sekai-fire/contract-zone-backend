@@ -50,7 +50,7 @@ defmodule Uro.VSekai do
   Public zones always admit entry. Private zones require an explicit CAN_ENTER
   edge (or a chain: OWNS implies CAN_ENTER).
 
-  Called at WebTransport connect time — not at listing time.
+  Called when a user joins the `zone:<id>` channel (`Uro.ZoneChannel`) — not at listing time.
   """
   def can_enter_zone?(%Zone{public: true}, _player_id), do: true
 

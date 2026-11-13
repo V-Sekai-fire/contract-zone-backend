@@ -44,6 +44,10 @@ config :uro, :pow,
 
 config :uro, :pow_assent, user_identities_context: Uro.UserIdentities
 
+config :uro, Uro.Endpoint, pubsub_server: Uro.PubSub
+
+config :phoenix, :filter_parameters, ["password", "token"]
+
 config :uro, :registration_open, false
 
 config :waffle,

@@ -17,13 +17,39 @@ defmodule Uro.Plug.Authentication do
   # Renew the session if it expires in less than this.
   @session_renewal @session_lifetime - :timer.hours(1)
 
+  @doc """
+  The user a signed access token belongs to, for callers with no `Plug.Conn` (the socket).
+
+  This is the check `fetch/2` makes on a request: the signature is verified with the
+  endpoint's secret key base and the token is looked up in the session store, through one
+  private function that `fetch/2` also calls. The session is not renewed here.
+  """
+  @spec user_for_access_token(term(), Config.t()) :: {:ok, %User{}} | {:error, :invalid_token}
+  def user_for_access_token(signed_access_token, config \\ [otp_app: :uro]) do
+    conn = %Conn{secret_key_base: Uro.Endpoint.config(:secret_key_base)}
+
+    case lookup(conn, signed_access_token, config) do
+      {:ok, {user, _metadata, _access_token}} -> {:ok, user}
+      {:error, :invalid_token} -> {:error, :invalid_token}
+    end
+  end
+
+  defp lookup(conn, signed_access_token, config) when is_binary(signed_access_token) do
+    with {:ok, access_token} <- verify_token(conn, signed_access_token, config),
+         {%User{} = user, metadata} <-
+           PersistentSessionCache.get(store_config(config), access_token) do
+      {:ok, {user, metadata, access_token}}
+    else
+      _ -> {:error, :invalid_token}
+    end
+  end
+
+  defp lookup(_conn, _signed_access_token, _config), do: {:error, :invalid_token}
+
   @impl true
   def fetch(%Conn{} = conn, config) do
-    store_config = store_config(config)
-
     with {:ok, signed_access_token} <- fetch_access_token(conn),
-         {:ok, access_token} <- verify_token(conn, signed_access_token, config),
-         {user, metadata} <- PersistentSessionCache.get(store_config, access_token),
+         {:ok, {user, metadata, access_token}} <- lookup(conn, signed_access_token, config),
          expires_in <- metadata[:expires_at] |> DateTime.diff(DateTime.utc_now(), :millisecond),
          conn <-
            conn
