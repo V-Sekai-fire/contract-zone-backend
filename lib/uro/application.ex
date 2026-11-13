@@ -25,6 +25,7 @@ defmodule Uro.Application do
           lobby_poller(),
           Uro.Pow.DetsCache,
           {Phoenix.PubSub, [name: Uro.PubSub, adapter: Phoenix.PubSub.PG2]},
+          Uro.Zones.Slots,
           ExMarcel.TableWrapper,
 
           # ExMarcel
