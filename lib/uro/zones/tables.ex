@@ -73,9 +73,44 @@ defmodule Uro.Zones.Tables do
   (`avatar_object/1`). It is the object of the `SEES` tuples and the object whose epoch
   the body row carries. The existing tuples name a user and a zone by the bare id, so the
   prefix keeps the body of a user apart from the user as a subject.
+
+  ## The keys table
+
+  `keys_table/1` is for one member: the keys of that member's pairs, as
+  `Uro.Zones.PairKeys.keys_for/3` returns them (a map from the slot of each other member
+  to the key the two share). It is a count (u8), then for each other slot the slot (u8)
+  and the 32 bytes of the key, in slot order: `1 + 33 * keys` bytes. It is the only
+  encoder that is given a key. `router_table/2` and `member_table/2` have no key among
+  their arguments, so no caller can make them write one.
+
+  ## Gathering the inputs
+
+  `inputs/2` is the one function here that reads state: the zone's table from
+  `Uro.Zones.Slots`, and the tuples and epochs from `Uro.Tuples`. In the tuples a user is
+  named by its id and a zone by its id, each as a string, as `Uro.VSekai` names them:
+
+    * `:send` of a seat is the tuple (user, `SEND`, zone);
+    * a `{viewer, sender}` pair of `sees` is the tuple (viewer, `SEES`, avatar object of
+      the sender), looked up for each ordered pair of seated users;
+    * `:epoch` of a seat is the epoch of the user's avatar object;
+    * `:number` of a seat is `user_number/1` of the user id.
+
+  The repository has no list of the entities of a zone, so the caller gives the further
+  ranges in the option `:ranges`, each as `{object, first_gid, last_gid}`. The controller
+  of a range is the subject of the tuple (subject, `CONTROLS`, object), and its epoch is
+  the epoch of the object. `Uro.Tuples.replace/3` leaves one such subject. If puts have
+  left several, the first in subject order who is seated is taken, and without one who is
+  seated the first in subject order. An object nobody controls has the controller `nil`.
+
+  The result is `{:ok, inputs}` only when `check/2` accepts it, so the encoders do not
+  raise on it.
   """
 
   import Bitwise
+
+  alias Uro.Tuples
+  alias Uro.Zones.PairKeys
+  alias Uro.Zones.Slots
 
   @slots 4
   @body_base 2_000_000
@@ -105,6 +140,8 @@ defmodule Uro.Zones.Tables do
           slot: 0..3 | 255,
           epoch: non_neg_integer()
         }
+  @type range :: {String.t(), non_neg_integer(), non_neg_integer()}
+  @type inputs :: %{slots: slots(), sees: sees(), controls: [control()]}
   @type reason ::
           {:overlap, row(), row()} | {:out_of_range, row()} | {:user_number, term()} | :too_many
 
@@ -264,6 +301,83 @@ defmodule Uro.Zones.Tables do
   end
 
   defp u?(value, max), do: is_integer(value) and value >= 0 and value <= max
+
+  @spec keys_table(%{Slots.slot() => PairKeys.key()}) :: binary()
+  def keys_table(keys) when is_map(keys) do
+    body =
+      for {slot, <<key::binary-size(32)>>} when slot in 0..3 <- Enum.sort(keys), into: <<>> do
+        <<slot, key::binary>>
+      end
+
+    if byte_size(body) != 33 * map_size(keys) do
+      raise ArgumentError, "a keys table takes slots 0 to 3 and keys of 32 bytes"
+    end
+
+    <<map_size(keys), body::binary>>
+  end
+
+  @doc """
+  Reads a keys table into a map from slot to key. A binary whose size is not what its
+  count says, whose slots are not in order, or that has a slot above 3, is
+  `{:error, :malformed}`.
+  """
+  @spec decode_keys_table(binary()) ::
+          {:ok, %{Slots.slot() => PairKeys.key()}} | {:error, :malformed}
+  def decode_keys_table(<<count, body::binary>>) when byte_size(body) == count * 33 do
+    entries = for <<slot, key::binary-size(32) <- body>>, do: {slot, key}
+    slots = Enum.map(entries, &elem(&1, 0))
+
+    if Enum.all?(slots, &(&1 < @slots)) and slots == Enum.uniq(Enum.sort(slots)),
+      do: {:ok, Map.new(entries)},
+      else: {:error, :malformed}
+  end
+
+  def decode_keys_table(binary) when is_binary(binary), do: {:error, :malformed}
+
+  @doc """
+  Gathers the inputs of the encoders for `zone_id` as it is now. `:slots` is the
+  `Uro.Zones.Slots` server (that module by default) and `:ranges` the further entity
+  ranges (none by default). See "Gathering the inputs" in the moduledoc.
+  """
+  @spec inputs(Slots.zone_id(), keyword()) :: {:ok, inputs()} | {:error, reason()}
+  def inputs(zone_id, opts \\ []) do
+    zone = to_string(zone_id)
+    table = Slots.table(zone_id, Keyword.get(opts, :slots, Slots))
+    users = for user <- table, user != nil, do: to_string(user)
+
+    slots =
+      for user <- table do
+        if user != nil do
+          user = to_string(user)
+
+          %{
+            user: user,
+            number: user_number(user),
+            send: Tuples.has?(user, "SEND", zone),
+            epoch: Tuples.epoch(avatar_object(user))
+          }
+        end
+      end
+
+    sees =
+      for viewer <- users,
+          sender <- users,
+          viewer != sender,
+          Tuples.has?(viewer, "SEES", avatar_object(sender)),
+          into: MapSet.new(),
+          do: {viewer, sender}
+
+    controls =
+      for {object, first, last} <- Keyword.get(opts, :ranges, []) do
+        holders = for t <- Tuples.list_for_object(object), t.verb == "CONTROLS", do: t.subject
+        controller = Enum.find(holders, List.first(holders), &(&1 in users))
+        %{first_gid: first, last_gid: last, controller: controller, epoch: Tuples.epoch(object)}
+      end
+
+    with :ok <- check(slots, controls) do
+      {:ok, %{slots: slots, sees: sees, controls: controls}}
+    end
+  end
 
   defp sees?(nil, _sender, _sees), do: false
   defp sees?(_viewer, nil, _sees), do: false

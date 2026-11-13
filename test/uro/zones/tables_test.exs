@@ -244,6 +244,57 @@ defmodule Uro.Zones.TablesTest do
     end
   end
 
+  describe "keys_table/1" do
+    test "is a count, then a slot and 32 key bytes for each other slot, in slot order" do
+      [k0, k2, k3] = for n <- [10, 12, 13], do: :binary.copy(<<n>>, 32)
+
+      assert Tables.keys_table(%{}) == <<0>>
+
+      assert Tables.keys_table(%{3 => k3, 0 => k0, 2 => k2}) ==
+               <<3, 0>> <> k0 <> <<2>> <> k2 <> <<3>> <> k3
+    end
+
+    test "is 1 + 33 * keys bytes and decodes to the keys it was given" do
+      seed = :rand.uniform(4_294_967_296)
+
+      Enum.reduce(1..@runs, :rand.seed_s(:exsss, seed), fn run, state ->
+        {slots, state} = shuffle([0, 1, 2, 3], state)
+        {count, state} = :rand.uniform_s(4, state)
+
+        {keys, state} =
+          slots
+          |> Enum.take(count - 1)
+          |> Enum.map_reduce(state, fn slot, state -> swap(:rand.bytes_s(32, state), slot) end)
+
+        keys = Map.new(keys, fn {key, slot} -> {slot, key} end)
+        table = Tables.keys_table(keys)
+        context = "seed #{seed}, run #{run}, slots #{inspect(Map.keys(keys))}"
+
+        assert byte_size(table) == 1 + 33 * map_size(keys), "the size is wrong (#{context})"
+        assert Tables.decode_keys_table(table) == {:ok, keys}, "not the keys (#{context})"
+        state
+      end)
+    end
+
+    test "control: the decoder refuses a table that is cut, padded, unsorted or malformed" do
+      key = :binary.copy(<<7>>, 32)
+      good = <<2, 0>> <> key <> <<3>> <> key
+      assert {:ok, %{0 => ^key, 3 => ^key}} = Tables.decode_keys_table(good)
+
+      for bad <- [
+            <<>>,
+            binary_part(good, 0, 66),
+            good <> <<0>>,
+            <<1, 0>> <> key <> <<3>> <> key,
+            <<2, 3>> <> key <> <<0>> <> key,
+            <<2, 1>> <> key <> <<1>> <> key,
+            <<1, 4>> <> key
+          ] do
+        assert Tables.decode_keys_table(bad) == {:error, :malformed}, inspect(bad)
+      end
+    end
+  end
+
   defp seat(user, number, opts \\ []) do
     %{
       user: user,
