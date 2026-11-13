@@ -121,7 +121,7 @@ defmodule Uro.ZoneController do
         "name" => "CMD_INSTANCE_ASSET",
         "opcode" => "0x04",
         "description" =>
-          "Instance a baked asset at a world position. Send this after the asset's baked_url is set (poll POST /storage/:id/manifest until baked_url is non-null). The authority zone (hilbert3D(pos)) fetches the .caidx, reassembles the .scn from casync chunks, and creates the entity. Neighbouring zones within AOI_CELLS receive a CH_INTEREST ghost without re-fetching.",
+          "Instance a baked asset at a world position. Send this after the asset's baked_url is set (poll POST /storage/:id/manifest until baked_url is non-null). The authority zone (morton3D(pos)) fetches the .caidx, reassembles the .scn from casync chunks, and creates the entity. Neighbouring zones within AOI_CELLS receive a CH_INTEREST ghost without re-fetching.",
         "access_control" => %{
           "model" => "ReBAC",
           "observe" => "public — all connected clients receive entity snapshots",
@@ -153,7 +153,7 @@ defmodule Uro.ZoneController do
               "size" => 4,
               "type" => "float32",
               "name" => "cx",
-              "notes" => "world position x, metres; determines Hilbert authority zone"
+              "notes" => "world position x, metres; determines the authority zone by its Morton code"
             },
             %{
               "offset" => 10,
@@ -185,9 +185,9 @@ defmodule Uro.ZoneController do
       }
     ],
     "authority_model" => %{
-      "algorithm" => "hilbert3D(pos)",
+      "algorithm" => "morton3D(pos)",
       "description" =>
-        "The zone whose Hilbert curve range contains hilbert3D(pos) is authoritative for any entity at that position. Authority is the only zone that executes CMD_INSTANCE_ASSET. The 3D Hilbert curve is formally proved in multiplayer-fabric-predictive-bvh/PredictiveBVH.lean.",
+        "The zone whose Morton code range contains morton3D(pos) is authoritative for any entity at that position. Authority is the only zone that executes CMD_INSTANCE_ASSET. The 30-bit Morton code is defined and gated in contract-spatial-oracle (Shared/Types.lean).",
       "interest_management" =>
         "Neighbouring zones within AOI_CELLS receive a CH_INTEREST ghost — they do not re-fetch or re-instance. Interest management bounds are proved in multiplayer-fabric-predictive-bvh."
     },
