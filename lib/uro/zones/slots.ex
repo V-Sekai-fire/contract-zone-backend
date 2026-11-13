@@ -6,7 +6,9 @@ defmodule Uro.Zones.Slots do
 
   A table is a list of four entries, each a user id or `nil`; the index is the slot number.
   `new/0`, `seat/2` and `vacate/2` are pure functions over a table. The process holds one
-  table per zone id in memory, so the tables are empty after a restart.
+  table per zone id in memory, so the tables are empty after a restart. A table that
+  becomes empty is dropped, so the process does not keep an entry for every zone ever
+  joined.
   """
 
   use GenServer
@@ -17,8 +19,6 @@ defmodule Uro.Zones.Slots do
   @type zone_id :: term()
   @type slot :: 0..3
   @type table :: [user_id() | nil]
-
-  # The table (pure).
 
   @spec new() :: table()
   def new, do: List.duplicate(nil, @slots)
@@ -45,8 +45,6 @@ defmodule Uro.Zones.Slots do
   def vacate(table, user_id) when not is_nil(user_id) do
     Enum.map(table, fn seated -> if seated == user_id, do: nil, else: seated end)
   end
-
-  # The process (one table per zone id).
 
   def start_link(opts) do
     GenServer.start_link(__MODULE__, :ok, name: Keyword.get(opts, :name, __MODULE__))
@@ -81,7 +79,6 @@ defmodule Uro.Zones.Slots do
   def handle_call({:leave, zone_id, user_id}, _from, tables) do
     table = vacate(Map.get(tables, zone_id, new()), user_id)
 
-    # An empty table is dropped, so the map does not grow with every zone ever joined.
     tables =
       if table == new(), do: Map.delete(tables, zone_id), else: Map.put(tables, zone_id, table)
 

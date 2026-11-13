@@ -21,8 +21,8 @@ defmodule Uro.Plug.Authentication do
   The user a signed access token belongs to, for callers with no `Plug.Conn` (the socket).
 
   This is the check `fetch/2` makes on a request: the signature is verified with the
-  endpoint's secret key base and the token is looked up in the session store. The session
-  is not renewed here.
+  endpoint's secret key base and the token is looked up in the session store, through one
+  private function that `fetch/2` also calls. The session is not renewed here.
   """
   @spec user_for_access_token(term(), Config.t()) :: {:ok, User.t()} | {:error, :invalid_token}
   def user_for_access_token(signed_access_token, config \\ [otp_app: :uro]) do
@@ -34,7 +34,6 @@ defmodule Uro.Plug.Authentication do
     end
   end
 
-  # Verifies the signature and finds the session; shared by `fetch/2` and the socket.
   defp lookup(conn, signed_access_token, config) when is_binary(signed_access_token) do
     with {:ok, access_token} <- verify_token(conn, signed_access_token, config),
          {%User{} = user, metadata} <-

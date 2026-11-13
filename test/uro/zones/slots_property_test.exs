@@ -7,6 +7,13 @@ defmodule Uro.Zones.SlotsPropertyTest do
   PropCheck is not a dependency of this project, so the sequences come from `:rand` with a
   seed that is printed when a sequence fails. There is no shrinking. Nothing here touches
   the Repo.
+
+  The pool has more users than slots and there are two joins for each leave, so tables
+  fill and the fifth join is reached often; the test fails if no sequence was refused,
+  because a property that never fills a table proves little.
+
+  After every step the table must be a valid seating: four entries (so at most four are
+  seated and no slot holds two users) and no user in two slots.
   """
   use ExUnit.Case, async: true
 
@@ -14,7 +21,6 @@ defmodule Uro.Zones.SlotsPropertyTest do
 
   @runs 500
   @max_steps 60
-  # More users than slots, so the table fills and the fifth join is reached often.
   @pool ~w(u1 u2 u3 u4 u5 u6 u7)
 
   setup do
@@ -47,7 +53,6 @@ defmodule Uro.Zones.SlotsPropertyTest do
         {state, refusals}
       end)
 
-    # The control must have been exercised: a property that never fills a table proves little.
     assert full_refusals > 0, "no sequence reached a full table (seed #{seed})"
   end
 
@@ -57,7 +62,6 @@ defmodule Uro.Zones.SlotsPropertyTest do
     Enum.map_reduce(1..n, state, fn _, state ->
       {kind, state} = :rand.uniform_s(3, state)
       {user, state} = :rand.uniform_s(length(@pool), state)
-      # Two joins for each leave, so tables tend to fill.
       {{if(kind == 3, do: :leave, else: :join), Enum.at(@pool, user - 1)}, state}
     end)
   end
@@ -65,8 +69,6 @@ defmodule Uro.Zones.SlotsPropertyTest do
   defp apply_step({:join, user}, zone, s), do: Slots.join(zone, user, s)
   defp apply_step({:leave, user}, zone, s), do: Slots.leave(zone, user, s)
 
-  # No slot holds two users (a slot is one list entry), no user holds two slots, and at most
-  # four are seated (the table always has exactly four entries).
   defp assert_valid(table, context) do
     assert length(table) == 4, "the table has not four slots: #{inspect(table)} (#{context})"
     seated = Enum.reject(table, &is_nil/1)

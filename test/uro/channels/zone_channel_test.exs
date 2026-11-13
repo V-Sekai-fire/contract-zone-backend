@@ -5,6 +5,9 @@ defmodule Uro.ZoneChannelTest do
   Joining `zone:<id>` asks `Uro.VSekai.can_enter_zone?/2` and then takes one of the zone's
   four slots. Today that rule admits anyone to a public zone and only the owner to a
   private one, so the tests with several members use a public zone.
+
+  Zone ids repeat between tests (the sandbox rolls the rows back), so `zone/1` empties the
+  zone's table when the test exits: no seat may outlive the test that took it.
   """
   use Uro.ChannelCase
 
@@ -19,8 +22,6 @@ defmodule Uro.ZoneChannelTest do
         |> Map.merge(attrs)
       )
 
-    # Zone ids repeat between tests (the sandbox rolls the rows back), so no seat may
-    # outlive the test that took it.
     on_exit(fn ->
       for user_id <- Slots.table(zone.id), user_id != nil, do: Slots.leave(zone.id, user_id)
     end)
