@@ -26,6 +26,7 @@ defmodule Uro.Application do
           Uro.Pow.DetsCache,
           {Phoenix.PubSub, [name: Uro.PubSub, adapter: Phoenix.PubSub.PG2]},
           Uro.Zones.Slots,
+          Uro.Zones.PairKeys,
           ExMarcel.TableWrapper,
 
           # ExMarcel
