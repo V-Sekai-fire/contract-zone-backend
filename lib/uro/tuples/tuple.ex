@@ -4,9 +4,10 @@ defmodule Uro.Tuples.Tuple do
   @moduledoc """
   One relationship tuple: `subject` has the relation `verb` to `object`.
 
-  The three are strings and none may be empty. `epoch` counts how many times control of
-  the object has changed hands (see `Uro.Tuples.replace/3`); a tuple that was only put has
-  epoch 0. The table has one row for each (subject, verb, object).
+  The three are strings and none may be empty. `epoch` is the epoch the object had when
+  the row was stored by `Uro.Tuples.replace/3`; a tuple that was only put has epoch 0. The
+  epoch of the object itself is in `Uro.Tuples.Epoch`, not here. The table has one row for
+  each (subject, verb, object).
   """
   use Ecto.Schema
 
