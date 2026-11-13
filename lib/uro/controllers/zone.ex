@@ -153,7 +153,8 @@ defmodule Uro.ZoneController do
               "size" => 4,
               "type" => "float32",
               "name" => "cx",
-              "notes" => "world position x, metres; determines the authority zone by its Morton code"
+              "notes" =>
+                "world position x, metres; determines the authority zone by its Morton code"
             },
             %{
               "offset" => 10,
