@@ -44,6 +44,9 @@ config :uro, :pow,
 
 config :uro, :pow_assent, user_identities_context: Uro.UserIdentities
 
+# Channels and `Uro.Endpoint.broadcast/3` go through the PubSub server the application starts.
+config :uro, Uro.Endpoint, pubsub_server: Uro.PubSub
+
 config :uro, :registration_open, false
 
 config :waffle,
