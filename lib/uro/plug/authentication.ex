@@ -24,7 +24,7 @@ defmodule Uro.Plug.Authentication do
   endpoint's secret key base and the token is looked up in the session store, through one
   private function that `fetch/2` also calls. The session is not renewed here.
   """
-  @spec user_for_access_token(term(), Config.t()) :: {:ok, User.t()} | {:error, :invalid_token}
+  @spec user_for_access_token(term(), Config.t()) :: {:ok, %User{}} | {:error, :invalid_token}
   def user_for_access_token(signed_access_token, config \\ [otp_app: :uro]) do
     conn = %Conn{secret_key_base: Uro.Endpoint.config(:secret_key_base)}
 
