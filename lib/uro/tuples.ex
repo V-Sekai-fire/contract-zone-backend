@@ -14,19 +14,25 @@ defmodule Uro.Tuples do
 
   ## Epochs
 
-  Each row has an epoch, 0 when the tuple is put. `replace/3` is how control of an object
-  changes hands: it removes every tuple with the given verb and object, stores the new
-  subject's tuple, and gives that row an epoch one higher than the object had, all in one
-  transaction. `epoch/1` is the highest epoch among the object's rows, or 0 when it has
-  none, so it goes up by exactly one with each replace. A reader that holds a tuple and
-  its epoch can tell that it is stale when the object's epoch is higher.
+  Each object has an epoch: the number of times `replace/3` has handed it over. It is in
+  the object's own row of `tuple_epochs` (`Uro.Tuples.Epoch`), and an object without a
+  row has epoch 0. `replace/3` is how control of an object changes hands: it adds one to
+  the object's epoch, removes every tuple with the given verb and object, and stores the
+  new subject's tuple with the new epoch on its row, all in one transaction. A tuple that
+  was only put has 0 on its row. `epoch/1` reads the object's row, so it goes up by
+  exactly one with each replace. A reader that holds a tuple and its epoch can tell that
+  it is stale when the object's epoch is higher.
 
-  The epoch lives on the rows, so an object with no row left is back at 0.
+  Only `replace/3` writes an epoch row, and nothing lowers or deletes one. So the epoch of
+  an object never goes down for the life of the database, also when every tuple of the
+  object is deleted: the next replace gives an epoch the object never had, and no two
+  handovers of one object have the same epoch.
   """
 
   import Ecto.Query
 
   alias Uro.Repo
+  alias Uro.Tuples.Epoch
   alias Uro.Tuples.Tuple
 
   @type verb :: String.t() | atom()
@@ -68,7 +74,7 @@ defmodule Uro.Tuples do
   @doc """
   Hands `object` to `new_subject` for `verb`: afterwards `new_subject` is the only subject
   with that verb on the object, and the object's epoch is one higher. Tuples of the object
-  with other verbs stay. A refused tuple changes nothing.
+  with other verbs stay. A refused tuple changes nothing, the epoch included.
   """
   @spec replace(verb(), String.t(), String.t()) ::
           {:ok, Tuple.t()} | {:error, Ecto.Changeset.t()}
@@ -76,21 +82,37 @@ defmodule Uro.Tuples do
     verb = verb_string(verb)
     attrs = %{subject: new_subject, verb: verb, object: object}
 
-    Repo.transaction(fn ->
-      changeset = Tuple.changeset(%Tuple{}, Map.put(attrs, :epoch, epoch(object) + 1))
-      Repo.delete_all(from t in Tuple, where: t.verb == ^verb and t.object == ^object)
+    with {:ok, _valid} <- Ecto.Changeset.apply_action(Tuple.changeset(%Tuple{}, attrs), :insert) do
+      Repo.transaction(fn ->
+        changeset = Tuple.changeset(%Tuple{}, Map.put(attrs, :epoch, raise_epoch(object)))
+        Repo.delete_all(from t in Tuple, where: t.verb == ^verb and t.object == ^object)
 
-      case Repo.insert(changeset) do
-        {:ok, tuple} -> tuple
-        {:error, changeset} -> Repo.rollback(changeset)
-      end
-    end)
+        case Repo.insert(changeset) do
+          {:ok, tuple} -> tuple
+          {:error, changeset} -> Repo.rollback(changeset)
+        end
+      end)
+    end
   end
 
-  @doc "The highest epoch among the tuples of `object`, or 0 when it has none."
+  @doc """
+  The epoch of `object`: the number of replaces it has had, or 0 when it has had none. It
+  never goes down, whatever is deleted.
+  """
   @spec epoch(String.t()) :: non_neg_integer()
   def epoch(object) do
-    Repo.one(from t in Tuple, where: t.object == ^object, select: max(t.epoch)) || 0
+    Repo.one(from e in Epoch, where: e.object == ^object, select: e.epoch) || 0
+  end
+
+  defp raise_epoch(object) do
+    row =
+      Repo.insert!(%Epoch{object: object, epoch: 1},
+        on_conflict: [inc: [epoch: 1]],
+        conflict_target: :object,
+        returning: [:epoch]
+      )
+
+    row.epoch
   end
 
   defp one(subject, verb, object) do
