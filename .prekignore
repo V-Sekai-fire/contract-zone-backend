@@ -1,0 +1,2 @@
+# Vendored projects carry their own prek configs; run only the repo root config.
+c_src/thirdparty/
