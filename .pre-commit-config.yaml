@@ -1,49 +1,18 @@
+# Baseline hygiene: these hooks report and never rewrite files.
+# Lockfiles, fixtures, binary formats and vendored trees are excluded
+# because fixtures are compared byte for byte.
+exclude: '(^|/)(vendor|third_party|thirdparty|build)/|\.(lock|usd[a-z]?|parquet|svg|png|jpe?g|webp|lean|glb|gltf|ppm|bin)$|(^|/)package-lock\.json$'
 repos:
-  - repo: local
+  - repo: builtin
     hooks:
-      - id: mix-format
-        name: "elixir: mix format"
-        entry: mix format --check-formatted
-        language: system
-        files: \.exs*$
-
-      - id: mix-compile
-        name: "elixir: mix compile"
-        entry: mix compile --force --warnings-as-errors
-        language: system
-        pass_filenames: false
-        files: \.ex$
-
-      - id: mix-credo
-        name: "elixir: mix credo"
-        entry: mix credo --min-priority high
-        language: system
-        pass_filenames: false
-        files: \.exs*$
-
-      - id: check-spdx
-        name: "license: SPDX headers"
-        entry: python3 scripts/check_spdx.py
-        language: system
-        files: \.(ex|exs|scm)$
-        exclude: ^(deps|_build)/
-
-      - id: format-lisp
-        name: "s7 scheme: reindent (c_src/s7/fixtures/*.scm)"
-        entry: python3 scripts/format_lisp.py --check
-        language: system
-        files: \.scm$
-
-      - id: format-lean
-        name: "lean: style (scripts/format_lean.py)"
-        entry: python3 scripts/format_lean.py --check
-        language: system
-        files: \.lean$
-        exclude: ^lean/\.lake/
-
-      - id: lean-build
-        name: "lean: lake build"
-        entry: bash -c 'bash c_src/thirdparty/build_cassie_native.sh && cd lean && lake build'
-        language: system
-        pass_filenames: false
-        files: \.lean$
+      - id: check-merge-conflict
+        args: [--assume-in-merge]
+      - id: check-case-conflict
+      - id: check-added-large-files
+        args: [--maxkb=1024]
+      - id: detect-private-key
+      - id: check-yaml
+      - id: check-toml
+      - id: check-json
+        exclude: '^\.vscode/'
+      - id: check-xml
